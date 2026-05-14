@@ -20,7 +20,7 @@
  * License:           GPL-3.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-3.0-standalone.html
  * Text Domain:       amiriset-meta-manager
- * Package:           Amiriset WordPress Toolkit
+ * Package:           Amiriset\MetaManager
  *
  * Copyright (C) 2016-2026 Amiriset.
  */

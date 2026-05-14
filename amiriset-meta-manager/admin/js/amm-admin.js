@@ -22,7 +22,7 @@
  * Dependencies: jQuery, wp.media (enqueued via wp_enqueue_media)
  *
  * @version 1.0.0-a.1
- * @package Amiriset WordPress Toolkit
+ * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov
  * @created 2026-05-14 15:06:23
