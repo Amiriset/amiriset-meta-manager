@@ -29,7 +29,7 @@ defined( 'ABSPATH' ) || exit;
  *   – Posts     (list of posts + their meta data)
  *   – CPT       (pick a CPT → list its posts + meta data)
  *
- * @version 1.0.0-a.2
+ * @version 1.0.0-a.3
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov
@@ -190,6 +190,11 @@ class Admin {
         wp_localize_script( 'amm-admin-js', 'ammData', [
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
             'nonce'   => wp_create_nonce( 'amm_ajax_nonce' ),
+            'i18n'    => [
+                'selectImage' => __( 'Select image', 'wp-smm' ),
+                'useImage'    => __( 'Use this image', 'wp-smm' ),
+                'removeImage' => __( 'Remove', 'wp-smm' ),
+            ]
         ] );
     }
 
@@ -270,6 +275,11 @@ class Admin {
                                 <button type="button" class="button amm-media-btn" data-target="amm_default_og_image">
                                     <?php esc_html_e( 'Select image', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
                                 </button>
+                                <?php if ( $opts['default_og_image'] ) : ?>
+                                    <button type="button" class="button amm-media-remove">
+                                        <?php esc_html_e( 'Remove', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                                    </button>
+                                <?php endif; ?>
                             </div>
                         </td>
                     </tr>
