@@ -110,7 +110,7 @@ class MetaBox {
 
         wp_enqueue_script(
             'amm-admin-js',
-            AMIRISET_META_MANAGER . 'admin/js/amm-admin.js',
+            AMIRISET_META_MANAGER_URL . 'admin/js/amm-admin.js',
             [ 'jquery' ],
             AMIRISET_META_MANAGER_VERSION,
             true
@@ -141,7 +141,7 @@ class MetaBox {
      * @param WP_Post $post
      * @return void
      */
-    public function render_meta_box( WP_Post $post ): void {
+    public function render_meta_box( \WP_Post $post ): void {
         $raw  = get_post_meta( $post->ID, AMIRISET_META_MANAGER_DB_KEY, true );
         $meta = $raw ? array_merge( self::empty_meta(), json_decode( $raw, true ) ?? [] )
                      : self::empty_meta();
@@ -357,7 +357,7 @@ class MetaBox {
      * @param WP_Post $post
      * @return void
      */
-    public function save_meta( int $post_id, WP_Post $post ): void {
+    public function save_meta( int $post_id, \WP_Post $post ): void {
         // Autosave / revision guard
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
             return;

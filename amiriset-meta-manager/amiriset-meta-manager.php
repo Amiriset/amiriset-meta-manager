@@ -66,14 +66,14 @@ define('AMIRISET_META_MANAGER_DISPLAY_NAME', '🔍 Amiriset Meta Manager' );
 
 // Load classes
 $plugin_files = [
-    'includes/class.loader.php',
-    'includes/class.activator.php',
-    'includes/class.deactivator.php',
-    'includes/class.keywords.php',
-    'includes/class.metabox.php',
-    'includes/class.frontend.php',
-    'includes/class.ajax.php',
-    'includes/class.core.php',
+    'include/class.loader.php',
+    'include/class.activator.php',
+    'include/class.deactivator.php',
+    'include/class.keywords.php',
+    'include/class.metabox.php',
+    'include/class.frontend.php',
+    'include/class.ajax.php',
+    'include/class.core.php',
     'admin/class.admin.php',
 ];
 foreach ( $plugin_files as $f ) {
@@ -87,4 +87,5 @@ use Amiriset\MetaManager\Deactivator;
 register_deactivation_hook( __FILE__, [  Deactivator::class, 'deactivate' ] );
 
  // Plugin - run. 
+use Amiriset\MetaManager\Core;
 ( new Core() )->run();
