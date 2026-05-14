@@ -38,4 +38,4 @@ global $wpdb;
 $wpdb->delete( $wpdb->postmeta, [ 'meta_key' => '_ami_meta_data' ] );
 
 // Remove global settings
-delete_option( 'ami_options' );
+delete_option( 'amm_options' );
