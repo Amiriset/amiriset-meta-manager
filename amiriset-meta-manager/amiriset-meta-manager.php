@@ -87,4 +87,5 @@ use Amiriset\MetaManager\Deactivator;
 register_deactivation_hook( __FILE__, [  Deactivator::class, 'deactivate' ] );
 
  // Plugin - run. 
+use Amiriset\MetaManager\Core;
 ( new Core() )->run();
