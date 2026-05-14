@@ -29,7 +29,7 @@ defined( 'ABSPATH' ) || exit;
  *   – Posts     (list of posts + their meta data)
  *   – CPT       (pick a CPT → list its posts + meta data)
  *
- * @version 1.0.0-a.1
+ * @version 1.0.0-a.2
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov
@@ -47,6 +47,8 @@ class Admin {
         add_action( 'admin_init',            [ $this, 'register_settings' ] );
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets'  ] );
         add_filter( 'plugin_action_links_' . AMIRISET_META_MANAGER_BASENAME, [ $this, 'plugin_action_links' ] );
+        // Analytics fields bypass Settings API to preserve <script> tags
+        add_action( 'admin_post_amm_save_analytics', [ $this, 'handle_save_analytics' ] );
     }
 
     
@@ -116,14 +118,43 @@ class Admin {
             'default_og_type'      => sanitize_text_field( $raw['default_og_type']     ?? $defaults['default_og_type'] ),
             'default_og_image'     => esc_url_raw(          $raw['default_og_image']    ?? '' ),
             'default_title_suffix' => sanitize_text_field( $raw['default_title_suffix'] ?? '' ),
-            'analytics_head'       => wp_kses_post(         $raw['analytics_head']       ?? '' ),
-            'analytics_body'       => wp_kses_post(         $raw['analytics_body']       ?? '' ),
+            // Admin-only fields (manage_options cap) — strip slashes only, allow <script> tags
+            'analytics_head'       => wp_unslash( $raw['analytics_head'] ?? '' ),
+            'analytics_body'       => wp_unslash( $raw['analytics_body'] ?? '' ),
             'enabled_post_types'   => array_map( 'sanitize_key', (array) ( $raw['enabled_post_types'] ?? [ 'post', 'page' ] ) ),
             'keyword_min_symbols'  => absint( $raw['keyword_min_symbols'] ?? 4 ),
             'keyword_max_words'    => absint( $raw['keyword_max_words']   ?? 25 ),
             'keyword_lang'         => sanitize_key( $raw['keyword_lang']  ?? '' ),
         ];
     }
+    
+    /**
+     * AJAX/POST request handler for saving analytics codes.
+     * 
+     * @return void none
+     */
+    public function handle_save_analytics(): void {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'Access denied.', AMIRISET_META_MANAGER_TEXT_DOMAIN ) );
+        }
+
+        check_admin_referer( 'amm_save_analytics' );
+
+        $opts = get_option(AMIRISET_META_MANAGER_OPTION_KEY, Activator::defaults() );
+
+        // wp_unslash only — no kses — admin-only field, script tags must survive
+        $opts['analytics_head'] = wp_unslash( $_POST['analytics_head'] ?? '' );
+        $opts['analytics_body'] = wp_unslash( $_POST['analytics_body'] ?? '' );
+
+        update_option( SMM_OPTION_KEY, $opts );
+
+        wp_safe_redirect( add_query_arg(
+            [ 'page' => 'amm-settings', 'amm_saved' => '1', '#' => 'amm-analytics' ],
+            admin_url( 'admin.php' )
+        ) );
+        exit;
+    }
+
 
     /**
      * Enqueue assets
@@ -309,40 +340,58 @@ class Admin {
                 </table>
 
                 <!-- ── Section: Analytics ── -->
-                <h2 class="amm-section-title"><?php esc_html_e( 'Analytics & Scripts', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></h2>
-                <table class="form-table amm-settings-table">
-                    <tr>
-                        <th>
-                            <label for="amm_analytics_head">
-                                <?php esc_html_e( '&lt;head&gt; Scripts', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
-                            </label>
-                        </th>
-                        <td>
-                            <textarea id="amm_analytics_head" rows="8"
-                                      name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[analytics_head]"
-                                      placeholder="<!-- Google Tag Manager, Meta Pixel, etc -->"
-                            ><?php echo esc_textarea( $opts['analytics_head'] ); ?></textarea>
-                            <p class="description"><?php esc_html_e( 'Injected just before &lt;/head&gt;. Accepts raw HTML/JS.', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>
-                            <label for="amm_analytics_body">
-                                <?php esc_html_e( '&lt;body&gt; Scripts', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
-                            </label>
-                        </th>
-                        <td>
-                            <textarea id="amm_analytics_body" rows="8"
-                                      name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[analytics_body]"
-                                      placeholder="<!-- GTM noscript, etc -->"
-                            ><?php echo esc_textarea( $opts['analytics_body'] ); ?></textarea>
-                            <p class="description"><?php esc_html_e( 'Injected right after &lt;body&gt; (requires theme to call wp_body_open()).', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></p>
-                        </td>
-                    </tr>
-                </table>
-
                 <?php submit_button(); ?>
             </form>
+            
+            <!-- ── Analytics form (separate — bypasses Settings API to keep <script> tags) ── -->
+            <div id="amm-analytics">
+                <h2 class="amm-section-title"><?php esc_html_e( 'Analytics & Scripts', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></h2>
+                <?php if ( isset( $_GET['amm_saved'] ) ) : ?>
+                    <div class="notice notice-success is-dismissible">
+                        <p><?php esc_html_e( 'Analytics scripts saved.', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></p>
+                    </div>
+                <?php endif; ?>
+                <p class="description" style="margin-bottom:12px">
+                    <?php esc_html_e( 'Paste full HTML blocks (including &lt;script&gt; tags) or raw JavaScript. Tags are preserved as-is.', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                </p>
+                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+                    <input type="hidden" name="action" value="amm_save_analytics">
+                    <?php wp_nonce_field( 'amm_save_analytics' ); ?>
+                    <table class="form-table amm-settings-table">
+                        <tr>
+                            <th>
+                                <label for="amm_analytics_head">
+                                    <?php esc_html_e( '&lt;head&gt; Scripts', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                                </label>
+                            </th>
+                            <td>
+                                <textarea id="amm_analytics_head" name="analytics_head" rows="8"
+                                          placeholder="&lt;!-- Google Tag Manager, Meta Pixel, etc --&gt;"
+                                ><?php echo esc_textarea( $opts['analytics_head'] ); ?></textarea>
+                                <p class="description">
+                                    <?php esc_html_e( 'Injected inside &lt;head&gt; (before &lt;/head&gt;). Wrap JS in &lt;script&gt; tags.', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                <label for="amm_analytics_body">
+                                    <?php esc_html_e( '&lt;body&gt; Scripts', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                                </label>
+                            </th>
+                            <td>
+                                <textarea id="amm_analytics_body" name="analytics_body" rows="8"
+                                          placeholder="&lt;!-- GTM noscript, etc --&gt;"
+                                ><?php echo esc_textarea( $opts['analytics_body'] ); ?></textarea>
+                                <p class="description">
+                                    <?php esc_html_e( 'Injected right after &lt;body&gt; open tag (requires theme to call wp_body_open()).', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                    <?php submit_button( __( 'Save Analytics Scripts', AMIRISET_META_MANAGER_TEXT_DOMAIN ), 'primary', 'amm_analytics_submit' ); ?>
+                </form>
+            </div>
         </div>
         <?php
     }

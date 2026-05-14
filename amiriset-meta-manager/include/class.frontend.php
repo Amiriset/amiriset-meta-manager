@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
  *  on the frontend. 
  * Hooked into wp_head (priority 1 — before theme outputs anything)
  *
- * @version 1.0.0-a.1
+ * @version 1.0.0-a.2
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov 
@@ -150,11 +150,11 @@ class Frontend {
      * @return void
      */
     public function output_analytics_head(): void {
-        $script = $this->options['analytics_head'] ?? '';
+        $script = trim($this->options['analytics_head'] ?? '');
         if ( $script && ! is_admin() ) {
             // Raw HTML/JS – trust is on the admin who saved it
             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            echo "\n" . $script . "\n";
+            echo "\n" . self::maybe_wrap_script( $script ) . "\n";
         }
     }
 
@@ -163,10 +163,26 @@ class Frontend {
      * @return void
      */
     public function output_analytics_body(): void {
-        $script = $this->options['analytics_body'] ?? '';
+        $script = trim($this->options['analytics_body'] ?? '');
         if ( $script && ! is_admin() ) {
             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            echo "\n" . $script . "\n";
+            echo "\n" . self::maybe_wrap_script( $script ) . "\n";
         }
+    }
+    
+     /**
+     * If the stored value contains no HTML tags (i.e. it's raw JS),
+     * wrap it in <script> tags so it executes correctly.     * 
+     *
+     * @param string $content
+     * @return string Full HTML snippets (GTM, Pixel etc.) are passed through as-is.
+     */            
+    private static function maybe_wrap_script( string $content ): string {
+        // Already contains HTML tags — output as-is
+        if ( preg_match( '/<[a-z]/i', $content ) ) {
+            return $content;
+        }
+        // Raw JS — wrap it
+        return "<script>\n" . $content . "\n</script>";
     }
 }
