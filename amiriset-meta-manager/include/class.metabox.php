@@ -110,7 +110,7 @@ class MetaBox {
 
         wp_enqueue_script(
             'amm-admin-js',
-            AMIRISET_META_MANAGER . 'admin/js/amm-admin.js',
+            AMIRISET_META_MANAGER_URL . 'admin/js/amm-admin.js',
             [ 'jquery' ],
             AMIRISET_META_MANAGER_VERSION,
             true
