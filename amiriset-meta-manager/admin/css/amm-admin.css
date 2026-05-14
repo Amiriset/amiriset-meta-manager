@@ -1,0 +1,352 @@
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *        ___             _        _                 _                       *
+ *       /   |           |_|      |_|               | |                      *
+ *      / /| | _________  _  _ __  _   ____   ___  _| |_                     *
+ *     / /_| ||  _   _  \| || / _|| | / ___| / _ \|_   _|                    *
+ *    / ___  || | | | | || ||  /  | ||___  ||  __/  | |_                     *
+ *   /_/   |_||_| |_| |_||_||_|   |_||____/  \___|  |___|                    *
+ *                                                                           *
+ *   AMIRISET [https://amiriset.com]                                         *
+ *   __________________                                                      *
+ *                                                                           *
+ *   Copyright (C) 2016-2026 Amiriset                                        *
+ *   Licensed under GNU GPLv3 or later.                                      *
+ *                                                                           *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*------------------------------------------------------------------------------
+     DESCRIPTIONS
+  ------------------------------------------------------------------------------
+  File <b>amm-admin.css</b> --  WP SEO Meta Manager — Admin Styles. 
+ 
+    Version    : 1.0.0-a.1
+    Package    : Amiriset WordPress Toolkit
+    License    : GPL-3.0-or-later
+    Created on : 2026-05-14 15:11:23
+    Author     : Y.Frolov
+*/
+
+
+/* ── Wrap ─────────────────────────────────────────────────── */
+.amm-wrap {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin-top: 6px;
+}
+
+/* ── Tabs ─────────────────────────────────────────────────── */
+.amm-tabs {
+    display: flex;
+    gap: 2px;
+    margin: 0 0 0 0;
+    padding: 0;
+    border-bottom: 2px solid #2271b1;
+    list-style: none;
+}
+
+.amm-tab-link {
+    padding: 8px 18px;
+    cursor: pointer;
+    background: #f0f0f1;
+    border: 1px solid #c3c4c7;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #3c434a;
+    user-select: none;
+    transition: background 0.15s;
+}
+
+.amm-tab-link:hover {
+    background: #dde0e3;
+}
+
+.amm-tab-link.active {
+    background: #fff;
+    color: #2271b1;
+    border-color: #2271b1;
+    border-bottom-color: #fff;
+    margin-bottom: -2px;
+}
+
+/* ── Tab content ───────────────────────────────────────────── */
+.amm-tab-content {
+    display: none;
+    padding: 16px 4px 8px;
+    animation: ammFadeIn 0.15s ease;
+}
+
+.amm-tab-content.active {
+    display: block;
+}
+
+@keyframes ammFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Table ─────────────────────────────────────────────────── */
+.amm-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.amm-table th {
+    width: 150px;
+    text-align: left;
+    font-weight: 600;
+    padding: 10px 12px 10px 0;
+    vertical-align: top;
+    color: #3c434a;
+}
+
+.amm-table td {
+    padding: 8px 0;
+}
+
+.amm-table input[type="text"],
+.amm-table input[type="url"],
+.amm-table textarea,
+.amm-table select {
+    width: 100%;
+    max-width: 680px;
+    box-sizing: border-box;
+}
+
+.amm-table textarea {
+    resize: vertical;
+    min-height: 72px;
+}
+
+/* ── Char counter ──────────────────────────────────────────── */
+.amm-counter {
+    font-size: 11px;
+    color: #8c8f94;
+    margin-top: 4px;
+}
+
+.amm-counter.amm-counter-warn {
+    color: #d63638;
+    font-weight: 600;
+}
+
+/* ── Custom meta table ─────────────────────────────────────── */
+.amm-custom-meta-table {
+    margin-bottom: 12px;
+}
+
+.amm-custom-meta-table thead th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #8c8f94;
+    padding: 6px 8px;
+    border-bottom: 1px solid #dcdcde;
+}
+
+.amm-custom-meta-table td {
+    padding: 6px 8px 6px 0;
+    vertical-align: middle;
+}
+
+.amm-custom-meta-table td:first-child { width: 130px; }
+.amm-custom-meta-table td:nth-child(2) { width: 200px; }
+.amm-custom-meta-table td:last-child { width: 32px; text-align: center; }
+
+.amm-custom-meta-table select { width: 120px; }
+.amm-custom-meta-table input[type="text"] { width: 100%; max-width: none; }
+
+.amm-remove-row {
+    color: #d63638 !important;
+    font-size: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    background: none;
+    border: none;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.amm-remove-row:hover {
+    color: #8c0000 !important;
+}
+
+/* ── OG Image ──────────────────────────────────────────────── */
+.amm-og-image-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.amm-og-preview {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #dcdcde;
+}
+
+/* ── Keyword chips ─────────────────────────────────────────── */
+.amm-kw-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.amm-kw-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 36px;
+    margin-bottom: 10px;
+}
+
+.amm-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    background: #f0f6fc;
+    border: 1px solid #2271b1;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #2271b1;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+}
+
+.amm-chip:hover {
+    background: #2271b1;
+    color: #fff;
+}
+
+.amm-chip.amm-chip-added {
+    background: #00a32a;
+    border-color: #00a32a;
+    color: #fff;
+    cursor: default;
+}
+
+/* ── Spinner ───────────────────────────────────────────────── */
+.amm-spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #dcdcde;
+    border-top-color: #2271b1;
+    border-radius: 50%;
+    animation: ammSpin 0.7s linear infinite;
+}
+
+@keyframes ammSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Admin list table ──────────────────────────────────────── */
+.amm-admin-wrap h1 {
+    margin-bottom: 16px;
+}
+
+.amm-section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1d2327;
+    border-bottom: 1px solid #dcdcde;
+    padding-bottom: 8px;
+    margin-top: 28px !important;
+}
+
+.amm-settings-table input[type="text"],
+.amm-settings-table input[type="url"],
+.amm-settings-table input[type="number"],
+.amm-settings-table select,
+.amm-settings-table textarea {
+    min-width: 360px;
+    max-width: 680px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.amm-settings-table textarea {
+    min-height: 120px;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    resize: vertical;
+}
+
+.amm-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+/* ── Post list table ───────────────────────────────────────── */
+.amm-list-table .amm-desc-cell,
+.amm-list-table .amm-kw-cell {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    color: #50575e;
+}
+
+.amm-row-has-meta td:first-child::before {
+    content: "✓ ";
+    color: #00a32a;
+    font-weight: 700;
+}
+
+.amm-row-no-meta {
+    opacity: 0.75;
+}
+
+.amm-thumb {
+    width: 50px;
+    height: 38px;
+    object-fit: cover;
+    border-radius: 3px;
+    border: 1px solid #dcdcde;
+}
+
+.amm-badge {
+    display: inline-block;
+    background: #2271b1;
+    color: #fff;
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* Status badges */
+.amm-status {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.amm-status-publish { background: #d1e8d1; color: #007a00; }
+.amm-status-draft   { background: #f5f0d7; color: #7a6000; }
+.amm-status-private { background: #f0dede; color: #7a0000; }
+
+/* CPT picker */
+.amm-cpt-picker {
+    margin-bottom: 16px;
+}
+
+.amm-cpt-picker select {
+    min-width: 240px;
+}
+
+/* Pagination */
+.amm-pagination {
+    margin-top: 12px;
+}
