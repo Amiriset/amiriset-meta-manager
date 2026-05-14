@@ -33,7 +33,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Core {
     private Loader   $loader;
-    private MetaBox  $meta_box;
+    private MetaBox  $metaBox;
     private Frontend $frontend;
     private Ajax     $ajax;
     private Admin    $admin;
@@ -54,7 +54,7 @@ final class Core {
         $this->load_text_domain();
 
         // Each component registers its own hooks via init_hooks()
-        $this->meta_box->init_hooks();
+        $this->metaBox->init_hooks();
         $this->frontend->init_hooks();
         $this->ajax->init_hooks();
         $this->admin->init_hooks();
