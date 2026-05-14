@@ -21,7 +21,7 @@
  * File <b>uninstall.php</b> -- WP SEO Meta Manager — Admin JS. 
  * Dependencies: jQuery, wp.media (enqueued via wp_enqueue_media)
  *
- * @version 1.0.0-a.1
+ * @version 1.0.0-a.3
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov
@@ -84,42 +84,76 @@
 
     // ── Media / Image picker ──────────────────────────────────────────────────
 
-    let mediaFrame = null;
+    //  Pattern: one shared wp.media frame, but $mediaTarget is updated on
+    //  every button click so the 'select' handler always writes to the
+    //  correct hidden input / preview wrap — even when multiple pickers
+    //  exist on the same page (meta box OG image + settings page default OG).
+
+    let mediaFrame   = null;
+    let $mediaTarget = null;
 
     $(document).on('click', '.amm-media-btn', function (e) {
         e.preventDefault();
         const $btn    = $(this);
         const targetId = $btn.data('target');
-        const $input  = $('#' + targetId);
-
+        
+        // Update context BEFORE opening so the 'select' callback sees it
+        $mediaTarget = {
+            $input: $('#' + targetId),
+            $btn:   $btn
+        };
+        
         if (mediaFrame) {
             mediaFrame.open();
             return;
         }
 
+        // i18n strings may be absent on settings page → safe fallbacks
+        const i18n = (ammData && ammData.i18n) ? ammData.i18n : {};
+
         mediaFrame = wp.media({
-            title:    ammData.i18n.selectImage,
-            button:   { text: ammData.i18n.useImage },
+            title:   i18n.selectImage || 'Select image',
+            button:  { text: i18n.useImage || 'Use this image' },
             multiple: false,
-            library:  { type: 'image' },
+            library:  { type: 'image' }
         });
 
         mediaFrame.on('select', function () {
+            if (!$mediaTarget) return;
+
             const attachment = mediaFrame.state().get('selection').first().toJSON();
+            
+            // For the preview use the thumbnail size when available (faster load)
+            const previewUrl = (attachment.sizes && attachment.sizes.thumbnail)
+                ? attachment.sizes.thumbnail.url
+                : attachment.url;
+
+            const { $input, $btn: $activeBtn } = $mediaTarget;
+
+            // 1. Save full-size URL to the hidden field
             $input.val(attachment.url).trigger('change');
 
-            // Update preview
+            // 2. Show / update preview image
             const $wrap = $input.closest('.amm-og-image-wrap');
             let $preview = $wrap.find('.amm-og-preview');
+            
             if ($preview.length) {
-                $preview.attr('src', attachment.url);
+                $preview.attr('src', previewUrl);
             } else {
-                $input.before('<img src="' + attachment.url + '" class="amm-og-preview" alt="">');
+                $('<img>', {
+                    src:   previewUrl,
+                    alt:   attachment.alt || '',
+                    class: 'amm-og-preview'
+                }).prependTo($wrap);
             }
 
-            // Show remove button if not present
+            // 3. Show "Remove" button once
             if (!$wrap.find('.amm-media-remove').length) {
-                $btn.after('<button type="button" class="button amm-media-remove">' + 'Remove' + '</button>');
+                $('<button>', {
+                    type:  'button',
+                    class: 'button amm-media-remove',
+                    text:  i18n.removeImage || 'Remove'
+                }).insertAfter($activeBtn);
             }
         });
 
@@ -131,6 +165,12 @@
         $wrap.find('.amm-og-preview').remove();
         $wrap.find('input[type="hidden"]').val('');
         $(this).remove();
+        
+         // Destroy frame so next open starts with empty selection
+        if (mediaFrame) {
+            mediaFrame.detach();
+            mediaFrame = null;
+        }
     });
 
     // ── Keyword Generation ────────────────────────────────────────────────────
