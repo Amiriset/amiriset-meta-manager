@@ -14,7 +14,7 @@
  * Plugin Name:       Amiriset Meta Manager
  * Plugin URI:        https://github.com/Amiriset/amiriset-meta-manager
  * Description:       WordPress Plug-In. Per-page/post SEO meta tags (description, keywords, OG, custom) stored as a single JSON object. Supports pages, posts and all CPTs. Built-in keyword extractor.
- * Version:           1.0.0-a.1
+ * Version:           1.0.0-a.4
  * Author:            Y.Frolov 
  * Author URI:        https://amiriset.com
  * License:           GPL-3.0-or-later
