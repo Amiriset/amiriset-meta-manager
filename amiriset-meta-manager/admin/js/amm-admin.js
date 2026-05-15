@@ -18,7 +18,7 @@
 //    DESCRIPTIONS
 //------------------------------------------------------------------------------
 /**
- * File <b>uninstall.php</b> -- WP SEO Meta Manager — Admin JS. 
+ * File <b>amm-admin.js</b> -- Amiriset Meta Manager — Admin JS. 
  * Dependencies: jQuery, wp.media (enqueued via wp_enqueue_media)
  *
  * @version 1.0.0-a.3
