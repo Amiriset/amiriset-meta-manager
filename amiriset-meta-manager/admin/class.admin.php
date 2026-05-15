@@ -477,7 +477,7 @@ class Admin {
         $paged = absint( $_GET['paged'] ?? 1 );
         $per   = 20;
 
-        $query = new WP_Query( [
+        $query = new \WP_Query( [
             'post_type'      => $post_type,
             'post_status'    => [ 'publish', 'draft', 'private' ],
             'posts_per_page' => $per,
