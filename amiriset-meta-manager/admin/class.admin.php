@@ -29,7 +29,7 @@ defined( 'ABSPATH' ) || exit;
  *   – Posts     (list of posts + their meta data)
  *   – CPT       (pick a CPT → list its posts + meta data)
  *
- * @version 1.0.0-a.3
+ * @version 1.0.0-a.4
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov
@@ -94,7 +94,7 @@ class Admin {
      */
     public function register_settings(): void {
         register_setting(
-            'amm_options_group',
+            '_amm_options_group',
             AMIRISET_META_MANAGER_OPTION_KEY,
             [
                 'sanitize_callback' => [ $this, 'sanitize_options' ],
@@ -236,7 +236,7 @@ class Admin {
             <?php settings_errors(AMIRISET_META_MANAGER_OPTION_KEY ); ?>
 
             <form method="post" action="options.php">
-                <?php settings_fields( 'amm_options_group' ); ?>
+                <?php settings_fields( '_amm_options_group' ); ?>
 
                 <!-- ── Section: Defaults ── -->
                 <h2 class="amm-section-title"><?php esc_html_e( 'Meta Tag Defaults', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></h2>
