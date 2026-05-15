@@ -453,7 +453,7 @@ class MetaBox {
      * @return array
      */
     public static function get_meta( int $post_id ): array {
-        $raw = get_post_meta( $post_id, AMIRISET_META_MANAGER, true );
+        $raw = get_post_meta( $post_id, AMIRISET_META_MANAGER_DB_KEY, true );
         if ( ! $raw ) {
             return self::empty_meta();
         }
