@@ -59,7 +59,7 @@ class Frontend {
         if ( ! is_singular() ) {
             return $title;
         }
-        $meta = Meta_Box::get_meta( get_the_ID() );
+        $meta = MetaBox::get_meta( get_the_ID() );
         if ( ! empty( $meta['title'] ) ) {
             return $meta['title'];
         }
@@ -78,7 +78,7 @@ class Frontend {
 
         global $post;
         $post_id = (int) $post->ID;
-        $meta    = Meta_Box::get_meta( $post_id );
+        $meta    = MetaBox::get_meta( $post_id );
         $opts    = $this->options;
 
         echo "\n<!-- Amiriset Meta Manager -->\n";
