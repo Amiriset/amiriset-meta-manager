@@ -59,8 +59,8 @@ class Admin {
      */
     public function register_pages(): void {
         add_menu_page(
-            __( 'SEO Meta Manager', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
-            __( 'SEO Meta',         AMIRISET_META_MANAGER_TEXT_DOMAIN ),
+            __( 'Amiriset Meta Manager', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
+            __( 'Amiriset Meta',         AMIRISET_META_MANAGER_TEXT_DOMAIN ),
             'manage_options',
             'amm-settings',
             [ $this, 'page_settings' ],
@@ -231,7 +231,7 @@ class Admin {
         $all_cpts = $this->get_all_public_cpts();
         ?>
         <div class="wrap amm-admin-wrap">
-            <h1><?php esc_html_e( 'SEO Meta Manager — Settings', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></h1>
+            <h1><?php esc_html_e( 'Amiriset Meta Manager — Settings', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></h1>
 
             <?php settings_errors(AMIRISET_META_MANAGER_OPTION_KEY ); ?>
 
@@ -434,10 +434,10 @@ class Admin {
             <h1>
                 <?php
                 echo esc_html( match ( $current_page ) {
-                    'amm-pages' => __( 'SEO Meta — Pages', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
-                    'amm-posts' => __( 'SEO Meta — Posts', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
-                    'amm-cpt'   => __( 'SEO Meta — Custom Post Types', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
-                    default     => 'SEO Meta',
+                    'amm-pages' => __( 'Amiriset Meta Manager — Pages', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
+                    'amm-posts' => __( 'Amiriset Meta Manager — Posts', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
+                    'amm-cpt'   => __( 'Amiriset Meta Manager — Custom Post Types', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
+                    default     => 'Amiriset Meta',
                 } );
                 ?>
             </h1>
