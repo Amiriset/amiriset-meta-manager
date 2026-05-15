@@ -146,7 +146,7 @@ class Admin {
         $opts['analytics_head'] = wp_unslash( $_POST['analytics_head'] ?? '' );
         $opts['analytics_body'] = wp_unslash( $_POST['analytics_body'] ?? '' );
 
-        update_option( SMM_OPTION_KEY, $opts );
+        update_option( AMIRISET_META_MANAGER_OPTION_KEY, $opts );
 
         wp_safe_redirect( add_query_arg(
             [ 'page' => 'amm-settings', 'amm_saved' => '1', '#' => 'amm-analytics' ],
@@ -504,7 +504,7 @@ class Admin {
             while ( $query->have_posts() ) {
                 $query->the_post();
                 $pid  = get_the_ID();
-                $meta = SMM_Meta_Box::get_meta( $pid );
+                $meta = MetaBox::get_meta( $pid );
 
                 $has_meta   = ! empty( $meta['description'] ) || ! empty( $meta['keywords'] ) || ! empty( $meta['og_title'] );
                 $row_class  = $has_meta ? 'amm-row-has-meta' : 'amm-row-no-meta';
