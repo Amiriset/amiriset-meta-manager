@@ -23,7 +23,7 @@
  * Runs on plugin DELETE (not deactivation).
  * Removes all stored post-meta and options.
  *
- * @version 1.0.0-a.1
+ * @version 1.0.0-a.4
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov
@@ -38,4 +38,4 @@ global $wpdb;
 $wpdb->delete( $wpdb->postmeta, [ 'meta_key' => '_ami_meta_data' ] );
 
 // Remove global settings
-delete_option( 'amm_options' );
+delete_option( '_amm_options' );
