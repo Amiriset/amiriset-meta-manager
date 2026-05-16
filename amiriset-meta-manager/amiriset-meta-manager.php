@@ -27,42 +27,25 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// Shared constants (also loaded by uninstall.php)
+require_once __DIR__ . '/include/constants.php';
+
 /**
- * Plugin version.
+ * Plugin main file.
  */
-define('AMIRISET_META_MANAGER_VERSION', '1.0.0-a.4');
-/**
- * Plugin main file
- */
-define('AMIRISET_META_MANAGER_FILE', __FILE__);
+define( 'AMIRISET_META_MANAGER_FILE', __FILE__ );
 /**
  * Plugin directory path.
  */
-define('AMIRISET_META_MANAGER_PATH', plugin_dir_path(__FILE__));
+define( 'AMIRISET_META_MANAGER_PATH', plugin_dir_path( __FILE__ ) );
 /**
  * Plugin directory url.
  */
-define('AMIRISET_META_MANAGER_URL', plugin_dir_url(__FILE__));
+define( 'AMIRISET_META_MANAGER_URL', plugin_dir_url( __FILE__ ) );
 /**
  * Plugin base name.
  */
-define('AMIRISET_META_MANAGER_BASENAME', plugin_basename(__FILE__));
-/**
- * DB key. Single post-meta key → JSON
- */
-define('AMIRISET_META_MANAGER_DB_KEY', '_amm_meta_data' );  
-/**
- * Global settings
- */
-define('AMIRISET_META_MANAGER_OPTION_KEY', '_amm_options' );
-/**
- * Text Domain
- */
-define('AMIRISET_META_MANAGER_TEXT_DOMAIN', 'amiriset-meta-manager' );
-/**
- * Display Name
- */
-define('AMIRISET_META_MANAGER_DISPLAY_NAME', '🔍 Amiriset Meta Manager' );
+define( 'AMIRISET_META_MANAGER_BASENAME', plugin_basename( __FILE__ ) );
 
 // Load classes
 $plugin_files = [
