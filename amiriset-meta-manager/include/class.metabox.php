@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
  * Stores/reads a single JSON object under the key defined in 
  * AMIRISET_META_MANAGER_META_KEY.
  *
- * @version 1.0.0-a.1
+ * @version 1.0.0-a.4
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov 
@@ -53,6 +53,11 @@ class MetaBox {
             'og_image'     => '',
             'og_type'      => '',
             'custom_meta'  => [],   // [ ['attr_type'=>'name','attr_value'=>'','content'=>''], … ]
+            'tw_card'        => '',  // summary | summary_large_image | app | player
+            'tw_title'       => '',
+            'tw_description' => '',
+            'tw_image'       => '',
+            'tw_creator'     => '',  // @handle per-post override
         ];
     }
     
@@ -79,7 +84,7 @@ class MetaBox {
         foreach ( $post_types as $pt ) {
             add_meta_box(
                 'amm_meta_box',
-                __(AMIRISET_META_MANAGER_DISPLAY_NAME, AMIRISET_META_MANAGER_TEXT_DOMAIN ),
+                Utils::LANG(AMIRISET_META_MANAGER_DISPLAY_NAME),
                 [ $this, 'render_meta_box' ],
                 $pt,
                 'normal',
@@ -126,11 +131,11 @@ class MetaBox {
             'maxWords'   => $options['keyword_max_words']   ?? 25,
             'lang'       => $options['keyword_lang']        ?? '',
             'i18n'       => [
-                'generating'  => __( 'Generating…', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
-                'addKeyword'  => __( 'Click a keyword to add it', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
-                'noKeywords'  => __( 'No keywords found', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
-                'selectImage' => __( 'Select image', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
-                'useImage'    => __( 'Use this image', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
+                'generating'  => Utils::LANG('Generating…'),
+                'addKeyword'  => Utils::LANG('Click a keyword to add it'),
+                'noKeywords'  => Utils::LANG('No keywords found'),
+                'selectImage' => Utils::LANG('Select image'),
+                'useImage'    => Utils::LANG('Use this image'),
             ],
         ] );
     }
@@ -152,26 +157,27 @@ class MetaBox {
 
             <!-- ── Tabs ── -->
             <ul class="amm-tabs">
-                <li class="amm-tab-link active" data-tab="amm-tab-basic"><?php esc_html_e( 'Basic SEO', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></li>
-                <li class="amm-tab-link" data-tab="amm-tab-og"><?php esc_html_e( 'Open Graph', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></li>
-                <li class="amm-tab-link" data-tab="amm-tab-custom"><?php esc_html_e( 'Custom Tags', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></li>
-                <li class="amm-tab-link" data-tab="amm-tab-keywords"><?php esc_html_e( '💡 Keywords', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></li>
+                <li class="amm-tab-link active" data-tab="amm-tab-basic"><?php Utils::ESC_HTML_E('Basic SEO'); ?></li>
+                <li class="amm-tab-link" data-tab="amm-tab-og"><?php Utils::ESC_HTML_E('Open Graph'); ?></li>
+                <li class="amm-tab-link" data-tab="amm-tab-custom"><?php Utils::ESC_HTML_E('Custom Tags'); ?></li>
+                <li class="amm-tab-link" data-tab="amm-tab-keywords"><?php Utils::ESC_HTML_E('💡 Keywords'); ?></li>
+                <li class="amm-tab-link" data-tab="amm-tab-twitter"><?php Utils::ESC_HTML_E( '𝕏 Twitter' ); ?></li>
             </ul>
 
             <!-- ── Tab: Basic SEO ── -->
             <div id="amm-tab-basic" class="amm-tab-content active">
                 <table class="amm-table">
                     <tr>
-                        <th><label for="amm_title"><?php esc_html_e( 'SEO Title', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></label></th>
+                        <th><label for="amm_title"><?php Utils::ESC_HTML_E('SEO Title'); ?></label></th>
                         <td>
                             <input type="text" id="amm_title" name="amm[title]"
                                    value="<?php echo esc_attr( $meta['title'] ); ?>"
                                    placeholder="<?php echo esc_attr( get_the_title( $post ) ); ?>">
-                            <p class="description"><?php esc_html_e( 'Leave empty to use post title.', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></p>
+                            <p class="description"><?php Utils::ESC_HTML_E('Leave empty to use post title.'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="amm_description"><?php esc_html_e( 'Description', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></label></th>
+                        <th><label for="amm_description"><?php Utils::ESC_HTML_E('Description'); ?></label></th>
                         <td>
                             <textarea id="amm_description" name="amm[description]" rows="3"
                                       maxlength="320"><?php echo esc_textarea( $meta['description'] ); ?></textarea>
@@ -179,25 +185,25 @@ class MetaBox {
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="amm_keywords"><?php esc_html_e( 'Keywords', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></label></th>
+                        <th><label for="amm_keywords"><?php Utils::ESC_HTML_E('Keywords'); ?></label></th>
                         <td>
                             <input type="text" id="amm_keywords" name="amm[keywords]"
                                    value="<?php echo esc_attr( $meta['keywords'] ); ?>"
                                    placeholder="keyword1, keyword2, keyword3">
-                            <p class="description"><?php esc_html_e( 'Comma-separated. Use the Keywords tab for auto-suggestions.', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></p>
+                            <p class="description"><?php Utils::ESC_HTML_E('Comma-separated. Use the Keywords tab for auto-suggestions.'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="amm_robots"><?php esc_html_e( 'Robots', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></label></th>
+                        <th><label for="amm_robots"><?php Utils::ESC_HTML_E('Robots'); ?></label></th>
                         <td>
                             <input type="text" id="amm_robots" name="amm[robots]"
                                    value="<?php echo esc_attr( $meta['robots'] ); ?>"
                                    placeholder="index, follow">
-                            <p class="description"><?php esc_html_e( 'Leave empty to use global default.', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></p>
+                            <p class="description"><?php Utils::ESC_HTML_E('Leave empty to use global default.'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="amm_canonical"><?php esc_html_e( 'Canonical URL', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></label></th>
+                        <th><label for="amm_canonical"><?php Utils::ESC_HTML_E('Canonical URL'); ?></label></th>
                         <td>
                             <input type="url" id="amm_canonical" name="amm[canonical]"
                                    value="<?php echo esc_attr( $meta['canonical'] ); ?>"
@@ -211,17 +217,17 @@ class MetaBox {
             <div id="amm-tab-og" class="amm-tab-content">
                 <table class="amm-table">
                     <tr>
-                        <th><label for="amm_og_title"><?php esc_html_e( 'OG Title', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></label></th>
+                        <th><label for="amm_og_title"><?php Utils::ESC_HTML_E('OG Title'); ?></label></th>
                         <td><input type="text" id="amm_og_title" name="amm[og_title]"
                                    value="<?php echo esc_attr( $meta['og_title'] ); ?>"></td>
                     </tr>
                     <tr>
-                        <th><label for="amm_og_description"><?php esc_html_e( 'OG Description', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></label></th>
+                        <th><label for="amm_og_description"><?php Utils::ESC_HTML_E('OG Description'); ?></label></th>
                         <td><textarea id="amm_og_description" name="amm[og_description]"
                                       rows="3"><?php echo esc_textarea( $meta['og_description'] ); ?></textarea></td>
                     </tr>
                     <tr>
-                        <th><label><?php esc_html_e( 'OG Image', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></label></th>
+                        <th><label><?php Utils::ESC_HTML_E('OG Image'); ?></label></th>
                         <td>
                             <div class="amm-og-image-wrap">
                                 <?php if ( $meta['og_image'] ) : ?>
@@ -230,18 +236,18 @@ class MetaBox {
                                 <input type="hidden" id="amm_og_image" name="amm[og_image]"
                                        value="<?php echo esc_attr( $meta['og_image'] ); ?>">
                                 <button type="button" class="button amm-media-btn" data-target="amm_og_image">
-                                    <?php esc_html_e( 'Select image', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                                    <?php Utils::ESC_HTML_E('Select image'); ?>
                                 </button>
                                 <?php if ( $meta['og_image'] ) : ?>
                                     <button type="button" class="button amm-media-remove">
-                                        <?php esc_html_e( 'Remove', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                                        <?php Utils::ESC_HTML_E('Remove'); ?>
                                     </button>
                                 <?php endif; ?>
                             </div>
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="amm_og_type"><?php esc_html_e( 'OG Type', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></label></th>
+                        <th><label for="amm_og_type"><?php Utils::ESC_HTML_E('OG Type'); ?></label></th>
                         <td>
                             <select id="amm_og_type" name="amm[og_type]">
                                 <?php
@@ -262,13 +268,13 @@ class MetaBox {
 
             <!-- ── Tab: Custom Meta Tags ── -->
             <div id="amm-tab-custom" class="amm-tab-content">
-                <p class="description"><?php esc_html_e( 'Add arbitrary meta tags. Each row = one <meta> element.', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></p>
+                <p class="description"><?php Utils::ESC_HTML_E('Add arbitrary meta tags. Each row = one <meta> element.'); ?></p>
                 <table class="amm-table amm-custom-meta-table">
                     <thead>
                         <tr>
-                            <th><?php esc_html_e( 'Attribute', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></th>
-                            <th><?php esc_html_e( 'Value', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></th>
-                            <th><?php esc_html_e( 'Content', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></th>
+                            <th><?php Utils::ESC_HTML_E('Attribute'); ?></th>
+                            <th><?php Utils::ESC_HTML_E('Value'); ?></th>
+                            <th><?php Utils::ESC_HTML_E('Content'); ?></th>
                             <th></th>
                         </tr>
                     </thead>
@@ -282,7 +288,7 @@ class MetaBox {
                     </tbody>
                 </table>
                 <button type="button" class="button amm-add-custom-meta">
-                    + <?php esc_html_e( 'Add Meta Tag', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                    + <?php Utils::ESC_HTML_E('Add Meta Tag'); ?>
                 </button>
 
                 <!-- Template row (hidden) -->
@@ -293,22 +299,115 @@ class MetaBox {
 
             <!-- ── Tab: Keyword Suggestions ── -->
             <div id="amm-tab-keywords" class="amm-tab-content">
-                <p><?php esc_html_e( 'Auto-generate keyword suggestions from this post\'s content.', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></p>
+                <p><?php Utils::ESC_HTML_E('Auto-generate keyword suggestions from this post\'s content.'); ?></p>
                 <div class="amm-kw-controls">
                     <button type="button" class="button button-secondary" id="amm-gen-keywords">
-                        ⚡ <?php esc_html_e( 'Generate Suggestions', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                        ⚡ <?php Utils::ESC_HTML_E('Generate Suggestions'); ?>
                     </button>
                     <select id="amm-kw-lang">
-                        <option value=""><?php esc_html_e( 'Auto-detect lang', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></option>
+                        <option value=""><?php Utils::ESC_HTML_E('Auto-detect lang'); ?></option>
                         <option value="en">English</option>
                         <option value="ru">Русский</option>
                         <option value="uk">Українська</option>
                     </select>
                 </div>
                 <div id="amm-kw-result" class="amm-kw-chips"></div>
-                <p class="description"><?php esc_html_e( 'Click a chip to append it to the Keywords field.', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></p>
+                <p class="description"><?php Utils::ESC_HTML_E('Click a chip to append it to the Keywords field.'); ?></p>
             </div>
-
+            
+            <!-- ── Tab: Twitter / X Card ── -->
+            <div id="amm-tab-twitter" class="amm-tab-content">
+                <?php
+                $opts        = get_option(AMIRISET_META_MANAGER_OPTION_KEY, Activator::defaults() );
+                $tw_site_global = $opts['twitter_site'] ?? '';
+                ?>
+                <table class="amm-table">
+                    <tr>
+                        <th><label for="amm_tw_card"><?php Utils::ESC_HTML_E('Card Type'); ?></label></th>
+                        <td>
+                            <select id="amm_tw_card" name="amm[tw_card]">
+                                <?php
+                                $tw_cards = [
+                                    ''                   => Utils::LANG('— inherit from settings —'),
+                                    'summary'            => 'summary',
+                                    'summary_large_image' => 'summary_large_image',
+                                    'app'                => 'app',
+                                    'player'             => 'player',
+                                ];
+                                foreach ( $tw_cards as $val => $label ) {
+                                    printf(
+                                        '<option value="%s" %s>%s</option>',
+                                        esc_attr( $val ),
+                                        selected( $meta['tw_card'], $val, false ),
+                                        esc_html( $label )
+                                    );
+                                }
+                                ?>
+                            </select>
+                            <p class="description">
+                                <?php Utils::ESC_HTML_E('Default can be set in Settings → Twitter Site Handle.'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="amm_tw_title"><?php Utils::ESC_HTML_E('Twitter Title'); ?></label></th>
+                        <td>
+                            <input type="text" id="amm_tw_title" name="amm[tw_title]"
+                                   value="<?php echo esc_attr( $meta['tw_title'] ); ?>"
+                                   placeholder="<?php Utils::ESC_HTML_E('Leave empty to inherit OG title or post title'); ?>">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="amm_tw_description"><?php Utils::ESC_HTML_E('Twitter Description'); ?></label></th>
+                        <td>
+                            <textarea id="amm_tw_description" name="amm[tw_description]"
+                                      rows="3" maxlength="200"><?php echo esc_textarea( $meta['tw_description'] ); ?></textarea>
+                            <p class="description amm-counter" data-field="amm_tw_description">0 / 200</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label><?php Utils::ESC_HTML_E('Twitter Image'); ?></label></th>
+                        <td>
+                            <div class="amm-og-image-wrap">
+                                <?php if ( $meta['tw_image'] ) : ?>
+                                    <img src="<?php echo esc_url( $meta['tw_image'] ); ?>"
+                                         class="amm-og-preview" alt="">
+                                <?php endif; ?>
+                                <input type="hidden" id="amm_tw_image" name="amm[tw_image]"
+                                       value="<?php echo esc_attr( $meta['tw_image'] ); ?>">
+                                <button type="button" class="button amm-media-btn" data-target="amm_tw_image">
+                                    <?php Utils::ESC_HTML_E('Select image'); ?>
+                                </button>
+                                <?php if ( $meta['tw_image'] ) : ?>
+                                    <button type="button" class="button amm-media-remove">
+                                        <?php Utils::ESC_HTML_E('Remove'); ?>
+                                    </button>
+                                <?php endif; ?>
+                            </div>
+                            <p class="description">
+                                <?php Utils::ESC_HTML_E('Min 120×120px. summary_large_image: min 280×150px. Falls back to OG image.'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="amm_tw_creator"><?php Utils::ESC_HTML_E('Creator Handle'); ?></label></th>
+                        <td>
+                            <input type="text" id="amm_tw_creator" name="amm[tw_creator]"
+                                   value="<?php echo esc_attr( $meta['tw_creator'] ); ?>"
+                                   placeholder="@author_handle">
+                            <p class="description">
+                                <?php
+                                printf(
+                                    /* translators: %s: twitter:site handle from settings */
+                                    Utils::ESC_HTML( 'twitter:creator for this post. Site handle (twitter:site): %s — set in Settings.'),
+                                    '<code>' . esc_html( $tw_site_global ?: Utils::LANG('not set') ) . '</code>'
+                                );
+                                ?>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
         </div><!-- .amm-wrap -->
         <?php
     }
@@ -343,7 +442,7 @@ class MetaBox {
                        placeholder="meta content value">
             </td>
             <td>
-                <button type="button" class="button-link amm-remove-row" title="<?php esc_attr_e( 'Remove', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>">✕</button>
+                <button type="button" class="button-link amm-remove-row" title="<?php Utils::ESC_ATTR_E( 'Remove' ); ?>">✕</button>
             </td>
         </tr>
         <?php
@@ -369,7 +468,7 @@ class MetaBox {
         // Nonce check
         if (
             ! isset( $_POST['amm_meta_nonce'] ) ||
-            ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['amm_meta_nonce'] ) ), 'amm_save_meta_' . $post_id )
+            ! wp_verify_nonce( sanitize_text_field( wp_unslash( Utils::POST('amm_meta_nonce') ) ), 'amm_save_meta_' . $post_id )
         ) {
             return;
         }
@@ -385,7 +484,7 @@ class MetaBox {
         }
 
         // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-        $raw = wp_unslash( $_POST['amm'] );
+        $raw = wp_unslash( Utils::POST('amm') );
 
         $data = [
             'title'          => sanitize_text_field( $raw['title']          ?? '' ),
@@ -398,6 +497,12 @@ class MetaBox {
             'og_image'       => esc_url_raw( $raw['og_image']               ?? '' ),
             'og_type'        => sanitize_text_field( $raw['og_type']        ?? '' ),
             'custom_meta'    => $this->sanitize_custom_meta( $raw['custom_meta'] ?? [] ),
+            'tw_card'        => sanitize_text_field( $raw['tw_card']        ?? '' ),
+            'tw_title'       => sanitize_text_field( $raw['tw_title']       ?? '' ),
+            'tw_description' => sanitize_textarea_field( $raw['tw_description'] ?? '' ),
+            'tw_image'       => esc_url_raw( $raw['tw_image']               ?? '' ),
+            'tw_creator'     => sanitize_text_field( $raw['tw_creator']     ?? '' ),
+ 
         ];
 
         // Remove rows that are completely empty

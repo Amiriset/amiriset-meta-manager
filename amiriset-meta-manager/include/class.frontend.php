@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
  *  on the frontend. 
  * Hooked into wp_head (priority 1 — before theme outputs anything)
  *
- * @version 1.0.0-a.2
+ * @version 1.0.0-a.4
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov 
@@ -140,6 +140,29 @@ class Frontend {
                     );
                 }
             }
+        }
+        
+        $opts       = $this->options;
+        $tw_card    = $meta['tw_card']        ?: ( $opts['twitter_card']  ?? 'summary' );
+        $tw_title   = $meta['tw_title']       ?: $og_title;
+        $tw_desc    = $meta['tw_description'] ?: $og_desc;
+        $tw_image   = $meta['tw_image']       ?: $og_image;
+        $tw_site    = $opts['twitter_site']   ?? '';
+        $tw_creator = $meta['tw_creator']     ?? '';
+
+        printf( '<meta name="twitter:card" content="%s">' . "\n",  esc_attr( $tw_card ) );
+        printf( '<meta name="twitter:title" content="%s">' . "\n", esc_attr( $tw_title ) );
+        if ( $tw_desc ) {
+            printf( '<meta name="twitter:description" content="%s">' . "\n", esc_attr( $tw_desc ) );
+        }
+        if ( $tw_image ) {
+            printf( '<meta name="twitter:image" content="%s">' . "\n", esc_url( $tw_image ) );
+        }
+        if ( $tw_site ) {
+            printf( '<meta name="twitter:site" content="%s">' . "\n", esc_attr( '@' . ltrim( $tw_site, '@' ) ) );
+        }
+        if ( $tw_creator ) {
+            printf( '<meta name="twitter:creator" content="%s">' . "\n", esc_attr( '@' . ltrim( $tw_creator, '@' ) ) );
         }
 
         echo "<!-- /Amiriset Meta Manager -->\n\n";

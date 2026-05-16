@@ -49,22 +49,22 @@ class Ajax {
         check_ajax_referer( 'amm_ajax_nonce', 'nonce' );
 
         if ( ! current_user_can( 'edit_posts' ) ) {
-            wp_send_json_error( [ 'message' => __( 'Permission denied.', 'amiriset-meta-manager' ) ], 403 );
+            wp_send_json_error( [ 'message' => Utils::LANG('Permission denied.') ], 403 );
         }
 
-        $post_id = absint( $_POST['post_id'] ?? 0 );
+        $post_id = Utils::POST_INT('post_id', 0 );
         if ( ! $post_id ) {
-            wp_send_json_error( [ 'message' => __( 'Invalid post ID.', 'amiriset-meta-manager' ) ], 400 );
+            wp_send_json_error( [ 'message' => Utils::LANG('Invalid post ID.') ], 400 );
         }
 
         $post = get_post( $post_id );
         if ( ! $post ) {
-            wp_send_json_error( [ 'message' => __( 'Post not found.', 'amiriset-meta-manager' ) ], 404 );
+            wp_send_json_error( [ 'message' => Utils::LANG('Post not found.') ], 404 );
         }
 
         // Respect capability for this specific post
         if ( ! current_user_can( 'edit_post', $post_id ) ) {
-            wp_send_json_error( [ 'message' => __( 'Permission denied.', 'amiriset-meta-manager' ) ], 403 );
+            wp_send_json_error( [ 'message' => Utils::LANG('Permission denied.') ], 403 );
         }
 
         // Read options
@@ -73,7 +73,7 @@ class Ajax {
         $maxWords   = absint( $opts['keyword_max_words']   ?? 25 );
 
         // Lang: user can override per-request (from the dropdown in the UI)
-        $lang = sanitize_text_field( $_POST['lang'] ?? $opts['keyword_lang'] ?? '' );
+        $lang = sanitize_text_field( Utils::POST('lang', ($opts['keyword_lang'] ?? '') ));
         if ( '' === $lang ) {
             $lang = Keywords::detectLang( $post->post_content );
         }
