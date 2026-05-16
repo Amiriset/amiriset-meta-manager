@@ -30,7 +30,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Plugin version.
  */
-define('AMIRISET_META_MANAGER_VERSION', '1.0.0-a.1');
+define('AMIRISET_META_MANAGER_VERSION', '1.0.0-a.4');
 /**
  * Plugin main file
  */
