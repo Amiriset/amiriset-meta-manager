@@ -35,7 +35,7 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 global $wpdb;
 
 // Remove per-post JSON meta from every post type
-$wpdb->delete( $wpdb->postmeta, [ 'meta_key' => '_ami_meta_data' ] );
+$wpdb->delete( $wpdb->postmeta, [ 'meta_key' => '_amm_meta_data' ] );
 
 // Remove global settings
 delete_option( '_amm_options' );
