@@ -135,6 +135,26 @@ class Utils {
         return sanitize_key( self::GET($key) );
     }
 
+    // URL helpers
+ 
+    /**
+     * Build a URL with query parameters and an optional anchor fragment.
+     * Wrapper around add_query_arg() that also handles #fragment,
+     * which add_query_arg() cannot produce natively.
+     *
+     * @param string $base_url Base URL.
+     * @param array  $args     Query parameters.
+     * @param string $fragment Anchor fragment (without #).
+     * @return string Full URL.
+     */
+    public static function ADD_QUERY_ARG_WITH_FRAGMENT( string $base_url, array $args = [], string $fragment = '' ): string {
+        $url = add_query_arg( $args, $base_url );
+        if ( $fragment !== '' ) {
+            $url .= '#' . rawurlencode( $fragment );
+        }
+        return $url;
+    }
+    
     // i18n 
 
     /**

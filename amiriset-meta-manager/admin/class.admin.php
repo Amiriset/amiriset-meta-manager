@@ -151,9 +151,10 @@ class Admin {
 
         update_option( AMIRISET_META_MANAGER_OPTION_KEY, $opts );
 
-        wp_safe_redirect( add_query_arg(
-            [ 'page' => 'amm-settings', 'amm_saved' => '1', '#' => 'amm-analytics' ],
-            admin_url( 'admin.php' )
+        wp_safe_redirect( Utils::ADD_QUERY_ARG_WITH_FRAGMENT(
+            admin_url( 'admin.php' ),
+            [ 'page' => 'amm-settings', 'amm_saved' => '1' ],
+            'amm-analytics'
         ) );
         exit;
     }
