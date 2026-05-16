@@ -29,7 +29,7 @@ defined( 'ABSPATH' ) || exit;
  *   – Posts     (list of posts + their meta data)
  *   – CPT       (pick a CPT → list its posts + meta data)
  *
- * @version 1.0.0-a.3
+ * @version 1.0.0-a.4
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov
@@ -59,8 +59,8 @@ class Admin {
      */
     public function register_pages(): void {
         add_menu_page(
-            __( 'Amiriset Meta Manager', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
-            __( 'Amiriset Meta',         AMIRISET_META_MANAGER_TEXT_DOMAIN ),
+            Utils::LANG('Amiriset Meta Manager'),
+            Utils::LANG('Amiriset Meta'),
             'manage_options',
             'amm-settings',
             [ $this, 'page_settings' ],
@@ -69,10 +69,10 @@ class Admin {
         );
 
         $sub_pages = [
-            [ 'amm-settings', __( 'Settings', AMIRISET_META_MANAGER_TEXT_DOMAIN ),      [ $this, 'page_settings' ]  ],
-            [ 'amm-pages',    __( 'Pages',    AMIRISET_META_MANAGER_TEXT_DOMAIN ),      [ $this, 'page_post_list' ] ],
-            [ 'amm-posts',    __( 'Posts',    AMIRISET_META_MANAGER_TEXT_DOMAIN ),      [ $this, 'page_post_list' ] ],
-            [ 'amm-cpt',      __( 'Custom Post Types', AMIRISET_META_MANAGER_TEXT_DOMAIN ), [ $this, 'page_post_list' ] ],
+            [ 'amm-settings', Utils::LANG('Settings'),      [ $this, 'page_settings' ]  ],
+            [ 'amm-pages',    Utils::LANG('Pages'),      [ $this, 'page_post_list' ] ],
+            [ 'amm-posts',    Utils::LANG('Posts'),      [ $this, 'page_post_list' ] ],
+            [ 'amm-cpt',      Utils::LANG('Custom Post Types'), [ $this, 'page_post_list' ] ],
         ];
 
         foreach ( $sub_pages as [ $slug, $label, $cb ] ) {
@@ -125,6 +125,9 @@ class Admin {
             'keyword_min_symbols'  => absint( $raw['keyword_min_symbols'] ?? 4 ),
             'keyword_max_words'    => absint( $raw['keyword_max_words']   ?? 25 ),
             'keyword_lang'         => sanitize_key( $raw['keyword_lang']  ?? '' ),
+            'twitter_site'         => sanitize_text_field( $raw['twitter_site'] ?? '' ),
+            'twitter_card'         => sanitize_text_field( $raw['twitter_card'] ?? 'summary_large_image' ),
+
         ];
     }
     
@@ -135,7 +138,7 @@ class Admin {
      */
     public function handle_save_analytics(): void {
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'Access denied.', AMIRISET_META_MANAGER_TEXT_DOMAIN ) );
+            wp_die( Utils::ESC_HTML('Access denied.') );
         }
 
         check_admin_referer( 'amm_save_analytics' );
@@ -143,8 +146,8 @@ class Admin {
         $opts = get_option(AMIRISET_META_MANAGER_OPTION_KEY, Activator::defaults() );
 
         // wp_unslash only — no kses — admin-only field, script tags must survive
-        $opts['analytics_head'] = wp_unslash( $_POST['analytics_head'] ?? '' );
-        $opts['analytics_body'] = wp_unslash( $_POST['analytics_body'] ?? '' );
+        $opts['analytics_head'] = wp_unslash( Utils::POST('analytics_head') );
+        $opts['analytics_body'] = wp_unslash( Utils::POST('analytics_body') );
 
         update_option( AMIRISET_META_MANAGER_OPTION_KEY, $opts );
 
@@ -191,9 +194,9 @@ class Admin {
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
             'nonce'   => wp_create_nonce( 'amm_ajax_nonce' ),
             'i18n'    => [
-                'selectImage' => __( 'Select image', 'wp-smm' ),
-                'useImage'    => __( 'Use this image', 'wp-smm' ),
-                'removeImage' => __( 'Remove', 'wp-smm' ),
+                'selectImage' => Utils::LANG('Select image'),
+                'useImage'    => Utils::LANG( 'Use this image'),
+                'removeImage' => Utils::LANG( 'Remove' ),
             ]
         ] );
     }
@@ -210,7 +213,7 @@ class Admin {
             sprintf(
                 '<a href="%s">%s</a>',
                 admin_url( 'admin.php?page=amm-settings' ),
-                __( 'Settings', AMIRISET_META_MANAGER_TEXT_DOMAIN )
+                Utils::LANG( 'Settings' )
             )
         );
         return $links;
@@ -224,14 +227,14 @@ class Admin {
      */
     public function page_settings(): void {
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'Access denied.', AMIRISET_META_MANAGER_TEXT_DOMAIN ) );
+            wp_die( Utils::ESC_HTML('Access denied.') );
         }
 
         $opts     = get_option(AMIRISET_META_MANAGER_OPTION_KEY, Activator::defaults() );
         $all_cpts = $this->get_all_public_cpts();
         ?>
         <div class="wrap amm-admin-wrap">
-            <h1><?php esc_html_e( 'Amiriset Meta Manager — Settings', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></h1>
+            <h1><?php Utils::ESC_HTML_E('Amiriset Meta Manager — Settings' ); ?></h1>
 
             <?php settings_errors(AMIRISET_META_MANAGER_OPTION_KEY ); ?>
 
@@ -239,18 +242,18 @@ class Admin {
                 <?php settings_fields( 'amm_options_group' ); ?>
 
                 <!-- ── Section: Defaults ── -->
-                <h2 class="amm-section-title"><?php esc_html_e( 'Meta Tag Defaults', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></h2>
+                <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('Meta Tag Defaults'); ?></h2>
                 <table class="form-table amm-settings-table">
                     <tr>
-                        <th><?php esc_html_e( 'Default Robots', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></th>
+                        <th><?php Utils::ESC_HTML_E('Default Robots'); ?></th>
                         <td>
                             <input type="text" name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[default_robots]"
                                    value="<?php echo esc_attr( $opts['default_robots'] ); ?>">
-                            <p class="description"><?php esc_html_e( 'e.g. index, follow', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></p>
+                            <p class="description"><?php Utils::ESC_HTML_E('e.g. index, follow'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th><?php esc_html_e( 'Default OG Type', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></th>
+                        <th><?php Utils::ESC_HTML_E('Default OG Type'); ?></th>
                         <td>
                             <select name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[default_og_type]">
                                 <?php foreach ( [ 'website', 'article', 'product' ] as $t ) : ?>
@@ -263,7 +266,7 @@ class Admin {
                         </td>
                     </tr>
                     <tr>
-                        <th><?php esc_html_e( 'Default OG Image', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></th>
+                        <th><?php Utils::ESC_HTML_E('Default OG Image'); ?></th>
                         <td>
                             <div class="amm-og-image-wrap">
                                 <?php if ( $opts['default_og_image'] ) : ?>
@@ -273,32 +276,32 @@ class Admin {
                                        name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[default_og_image]"
                                        value="<?php echo esc_attr( $opts['default_og_image'] ); ?>">
                                 <button type="button" class="button amm-media-btn" data-target="amm_default_og_image">
-                                    <?php esc_html_e( 'Select image', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                                    <?php Utils::ESC_HTML_E('Select image'); ?>
                                 </button>
                                 <?php if ( $opts['default_og_image'] ) : ?>
                                     <button type="button" class="button amm-media-remove">
-                                        <?php esc_html_e( 'Remove', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                                        <?php Utils::ESC_HTML_E('Remove'); ?>
                                     </button>
                                 <?php endif; ?>
                             </div>
                         </td>
                     </tr>
                     <tr>
-                        <th><?php esc_html_e( 'Title Suffix', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></th>
+                        <th><?php Utils::ESC_HTML_E('Title Suffix'); ?></th>
                         <td>
                             <input type="text" name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[default_title_suffix]"
                                    value="<?php echo esc_attr( $opts['default_title_suffix'] ); ?>">
-                            <p class="description"><?php esc_html_e( 'Appended to SEO title (e.g. " | My Site").', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></p>
+                            <p class="description"><?php Utils::ESC_HTML_E('Appended to SEO title (e.g. " | My Site").'); ?></p>
                         </td>
                     </tr>
                 </table>
 
                 <!-- ── Section: Post types ── -->
-                <h2 class="amm-section-title"><?php esc_html_e( 'Enabled Post Types', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></h2>
-                <p class="description"><?php esc_html_e( 'The SEO meta box will appear on these post types.', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></p>
+                <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('Enabled Post Types'); ?></h2>
+                <p class="description"><?php Utils::ESC_HTML_E('The SEO meta box will appear on these post types.'); ?></p>
                 <table class="form-table amm-settings-table">
                     <tr>
-                        <th><?php esc_html_e( 'Post Types', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></th>
+                        <th><?php Utils::ESC_HTML_E('Post Types'); ?></th>
                         <td>
                             <?php
                             $enabled  = $opts['enabled_post_types'] ?? [ 'post', 'page' ];
@@ -318,10 +321,10 @@ class Admin {
                 </table>
 
                 <!-- ── Section: Keywords ── -->
-                <h2 class="amm-section-title"><?php esc_html_e( 'Keyword Extractor Settings', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></h2>
+                <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('Keyword Extractor Settings'); ?></h2>
                 <table class="form-table amm-settings-table">
                     <tr>
-                        <th><?php esc_html_e( 'Min. word length', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></th>
+                        <th><?php Utils::ESC_HTML_E( 'Min. word length'); ?></th>
                         <td>
                             <input type="number" min="2" max="10"
                                    name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[keyword_min_symbols]"
@@ -329,7 +332,7 @@ class Admin {
                         </td>
                     </tr>
                     <tr>
-                        <th><?php esc_html_e( 'Max. keywords', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></th>
+                        <th><?php Utils::ESC_HTML_E('Max. keywords'); ?></th>
                         <td>
                             <input type="number" min="5" max="100"
                                    name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[keyword_max_words]"
@@ -337,10 +340,10 @@ class Admin {
                         </td>
                     </tr>
                     <tr>
-                        <th><?php esc_html_e( 'Default language', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></th>
+                        <th><?php Utils::ESC_HTML_E('Default language'); ?></th>
                         <td>
                             <select name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[keyword_lang]">
-                                <option value=""   <?php selected( $opts['keyword_lang'], '' );   ?>><?php esc_html_e( 'Auto-detect', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></option>
+                                <option value=""   <?php selected( $opts['keyword_lang'], '' );   ?>><?php Utils::ESC_HTML_E('Auto-detect'); ?></option>
                                 <option value="en" <?php selected( $opts['keyword_lang'], 'en' ); ?>>English</option>
                                 <option value="ru" <?php selected( $opts['keyword_lang'], 'ru' ); ?>>Русский</option>
                                 <option value="uk" <?php selected( $opts['keyword_lang'], 'uk' ); ?>>Українська</option>
@@ -349,20 +352,62 @@ class Admin {
                     </tr>
                 </table>
 
-                <!-- ── Section: Analytics ── -->
+                <!-- ── Section: Twitter / X ── -->
+                <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('Twitter / X Card Defaults'); ?></h2>
+                <table class="form-table amm-settings-table">
+                    <tr>
+                        <th><?php Utils::ESC_HTML_E('Site Handle'); ?></th>
+                        <td>
+                            <input type="text"
+                                   name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[twitter_site]"
+                                   value="<?php echo esc_attr( $opts['twitter_site'] ?? '' ); ?>"
+                                   placeholder="@yoursite">
+                            <p class="description">
+                                <?php Utils::ESC_HTML_E('twitter:site — the @username of the website. Output on every singular page.'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><?php Utils::ESC_HTML_E('Default Card Type'); ?></th>
+                        <td>
+                            <select name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[twitter_card]">
+                                <?php
+                                $card_types = [
+                                    'summary'             => 'summary',
+                                    'summary_large_image' => 'summary_large_image',
+                                    'app'                 => 'app',
+                                    'player'              => 'player',
+                                ];
+                                $current_card = $opts['twitter_card'] ?? 'summary_large_image';
+                                foreach ( $card_types as $val => $label ) {
+                                    printf(
+                                        '<option value="%s" %s>%s</option>',
+                                        esc_attr( $val ),
+                                        selected( $current_card, $val, false ),
+                                        esc_html( $label )
+                                    );
+                                }
+                                ?>
+                            </select>
+                            <p class="description">
+                                <?php Utils::ESC_HTML_E('Per-post override is available in the meta box Twitter tab.'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
                 <?php submit_button(); ?>
             </form>
             
             <!-- ── Analytics form (separate — bypasses Settings API to keep <script> tags) ── -->
             <div id="amm-analytics">
-                <h2 class="amm-section-title"><?php esc_html_e( 'Analytics & Scripts', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></h2>
+                <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('Analytics & Scripts'); ?></h2>
                 <?php if ( isset( $_GET['amm_saved'] ) ) : ?>
                     <div class="notice notice-success is-dismissible">
-                        <p><?php esc_html_e( 'Analytics scripts saved.', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></p>
+                        <p><?php Utils::ESC_HTML_E('Analytics scripts saved.'); ?></p>
                     </div>
                 <?php endif; ?>
                 <p class="description" style="margin-bottom:12px">
-                    <?php esc_html_e( 'Paste full HTML blocks (including &lt;script&gt; tags) or raw JavaScript. Tags are preserved as-is.', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                    <?php Utils::ESC_HTML_E('Paste full HTML blocks (including &lt;script&gt; tags) or raw JavaScript. Tags are preserved as-is.'); ?>
                 </p>
                 <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
                     <input type="hidden" name="action" value="amm_save_analytics">
@@ -371,7 +416,7 @@ class Admin {
                         <tr>
                             <th>
                                 <label for="amm_analytics_head">
-                                    <?php esc_html_e( '&lt;head&gt; Scripts', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                                    <?php Utils::ESC_HTML_E('&lt;head&gt; Scripts'); ?>
                                 </label>
                             </th>
                             <td>
@@ -379,14 +424,14 @@ class Admin {
                                           placeholder="&lt;!-- Google Tag Manager, Meta Pixel, etc --&gt;"
                                 ><?php echo esc_textarea( $opts['analytics_head'] ); ?></textarea>
                                 <p class="description">
-                                    <?php esc_html_e( 'Injected inside &lt;head&gt; (before &lt;/head&gt;). Wrap JS in &lt;script&gt; tags.', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                                    <?php Utils::ESC_HTML_E('Injected inside &lt;head&gt; (before &lt;/head&gt;). Wrap JS in &lt;script&gt; tags.'); ?>
                                 </p>
                             </td>
                         </tr>
                         <tr>
                             <th>
                                 <label for="amm_analytics_body">
-                                    <?php esc_html_e( '&lt;body&gt; Scripts', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                                    <?php Utils::ESC_HTML_E( '&lt;body&gt; Scripts'); ?>
                                 </label>
                             </th>
                             <td>
@@ -394,12 +439,12 @@ class Admin {
                                           placeholder="&lt;!-- GTM noscript, etc --&gt;"
                                 ><?php echo esc_textarea( $opts['analytics_body'] ); ?></textarea>
                                 <p class="description">
-                                    <?php esc_html_e( 'Injected right after &lt;body&gt; open tag (requires theme to call wp_body_open()).', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?>
+                                    <?php Utils::ESC_HTML_E('Injected right after &lt;body&gt; open tag (requires theme to call wp_body_open()).' ); ?>
                                 </p>
                             </td>
                         </tr>
                     </table>
-                    <?php submit_button( __( 'Save Analytics Scripts', AMIRISET_META_MANAGER_TEXT_DOMAIN ), 'primary', 'amm_analytics_submit' ); ?>
+                    <?php submit_button( Utils::LANG( 'Save Analytics Scripts' ), 'primary', 'amm_analytics_submit' ); ?>
                 </form>
             </div>
         </div>
@@ -414,16 +459,16 @@ class Admin {
      */
     public function page_post_list(): void {
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'Access denied.', AMIRISET_META_MANAGER_TEXT_DOMAIN ) );
+            wp_die( Utils::ESC_HTML('Access denied.') );
         }
 
-        $current_page = sanitize_key( $_GET['page'] ?? 'amm-settings' );
+        $current_page = sanitize_key( Utils::GET('page') );
 
         // Determine which post type(s) to list
         $post_type = match ( $current_page ) {
             'amm-pages' => 'page',
             'amm-posts' => 'post',
-            'amm-cpt'   => sanitize_key( $_GET['cpt'] ?? '' ),
+            'amm-cpt'   => sanitize_key( Utils::GET('cpt') ),
             default     => '',
         };
 
@@ -434,9 +479,9 @@ class Admin {
             <h1>
                 <?php
                 echo esc_html( match ( $current_page ) {
-                    'amm-pages' => __( 'Amiriset Meta Manager — Pages', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
-                    'amm-posts' => __( 'Amiriset Meta Manager — Posts', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
-                    'amm-cpt'   => __( 'Amiriset Meta Manager — Custom Post Types', AMIRISET_META_MANAGER_TEXT_DOMAIN ),
+                    'amm-pages' => Utils::LANG('Amiriset Meta Manager — Pages'),
+                    'amm-posts' => Utils::LANG('Amiriset Meta Manager — Posts'),
+                    'amm-cpt'   => Utils::LANG('Amiriset Meta Manager — Custom Post Types'),
                     default     => 'Amiriset Meta',
                 } );
                 ?>
@@ -447,7 +492,7 @@ class Admin {
                 <form method="get" class="amm-cpt-picker">
                     <input type="hidden" name="page" value="amm-cpt">
                     <select name="cpt" onchange="this.form.submit()">
-                        <option value=""><?php esc_html_e( '— Select Post Type —', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></option>
+                        <option value=""><?php Utils::ESC_HTML_E('— Select Post Type —'); ?></option>
                         <?php foreach ( $all_cpts as $slug => $label ) : ?>
                             <option value="<?php echo esc_attr( $slug ); ?>"
                                 <?php selected( $post_type, $slug ); ?>>
@@ -461,7 +506,7 @@ class Admin {
             <?php if ( $post_type ) : ?>
                 <?php $this->render_post_table( $post_type ); ?>
             <?php elseif ( 'amm-cpt' === $current_page ) : ?>
-                <p><?php esc_html_e( 'Please select a post type above.', AMIRISET_META_MANAGER_TEXT_DOMAIN ); ?></p>
+                <p><?php Utils::ESC_HTML_E('Please select a post type above.'); ?></p>
             <?php endif; ?>
         </div>
         <?php
@@ -474,7 +519,7 @@ class Admin {
      * @return void
      */
     private function render_post_table( string $post_type ): void {
-        $paged = absint( $_GET['paged'] ?? 1 );
+        $paged = Utils::GET_INT('paged', 1);
         $per   = 20;
 
         $query = new \WP_Query( [
@@ -490,14 +535,14 @@ class Admin {
 
         echo '<table class="wp-list-table widefat fixed striped amm-list-table">';
         echo '<thead><tr>';
-        echo '<th>' . esc_html__( 'Title', AMIRISET_META_MANAGER_TEXT_DOMAIN )       . '</th>';
-        echo '<th>' . esc_html__( 'Status', AMIRISET_META_MANAGER_TEXT_DOMAIN )      . '</th>';
-        echo '<th>' . esc_html__( 'SEO Title', AMIRISET_META_MANAGER_TEXT_DOMAIN )   . '</th>';
-        echo '<th>' . esc_html__( 'Description', AMIRISET_META_MANAGER_TEXT_DOMAIN ) . '</th>';
-        echo '<th>' . esc_html__( 'Keywords', AMIRISET_META_MANAGER_TEXT_DOMAIN )    . '</th>';
-        echo '<th>' . esc_html__( 'OG Image', AMIRISET_META_MANAGER_TEXT_DOMAIN )    . '</th>';
-        echo '<th>' . esc_html__( 'Custom Tags', AMIRISET_META_MANAGER_TEXT_DOMAIN ) . '</th>';
-        echo '<th>' . esc_html__( 'Edit', AMIRISET_META_MANAGER_TEXT_DOMAIN )        . '</th>';
+        echo '<th>' . Utils::ESC_HTML('Title')       . '</th>';
+        echo '<th>' . Utils::ESC_HTML('Status')      . '</th>';
+        echo '<th>' . Utils::ESC_HTML('SEO Title')   . '</th>';
+        echo '<th>' . Utils::ESC_HTML('Description') . '</th>';
+        echo '<th>' . Utils::ESC_HTML('Keywords')    . '</th>';
+        echo '<th>' . Utils::ESC_HTML('OG Image')    . '</th>';
+        echo '<th>' . Utils::ESC_HTML('Custom Tags') . '</th>';
+        echo '<th>' . Utils::ESC_HTML('Edit')        . '</th>';
         echo '</tr></thead><tbody>';
 
         if ( $query->have_posts() ) {
@@ -540,7 +585,7 @@ class Admin {
                 echo '</tr>';
             }
         } else {
-            echo '<tr><td colspan="8">' . esc_html__( 'No posts found.', AMIRISET_META_MANAGER_TEXT_DOMAIN ) . '</td></tr>';
+            echo '<tr><td colspan="8">' . Utils::ESC_HTML( 'No posts found.' ) . '</td></tr>';
         }
 
         wp_reset_postdata();
