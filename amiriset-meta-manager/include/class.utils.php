@@ -51,6 +51,20 @@ class Utils {
     }
 
     /**
+     * Read an array from $_GET.
+     * 
+     * @param string $key Key.
+     * @param array  $default Default value.
+     * @return array GET array or default.
+     */
+    public static function GET_ARRAY( string $key, array $default = [] ): array {
+        if ( ! isset( $_GET[ $key ] ) || ! is_array( $_GET[ $key ] ) ) {
+            return $default;
+        }
+        return $_GET[ $key ];
+    }
+    
+    /**
      * Read a string from $_POST.
      * 
      * @param string $key Key.
@@ -63,6 +77,21 @@ class Utils {
         }
         return  $_POST[ $key ];
     }
+    
+    /**
+     * Read an array from $_POST.
+     * 
+     * @param string $key Key.
+     * @param array  $default Default value.
+     * @return array POST array or default.
+     */
+    public static function POST_ARRAY( string $key, array $default = [] ): array {
+        if ( ! isset( $_POST[ $key ] ) || ! is_array( $_POST[ $key ] ) ) {
+            return $default;
+        }
+        return $_POST[ $key ];
+    }
+ 
 
     /**
      * Read an absint value from $_GET.

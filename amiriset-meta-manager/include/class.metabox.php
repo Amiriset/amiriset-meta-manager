@@ -483,8 +483,7 @@ class MetaBox {
             return;
         }
 
-        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-        $raw = wp_unslash( Utils::POST('amm') );
+        $raw = wp_unslash( Utils::POST_ARRAY( 'amm' ) );
 
         $data = [
             'title'          => sanitize_text_field( $raw['title']          ?? '' ),
