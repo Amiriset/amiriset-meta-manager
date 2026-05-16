@@ -144,7 +144,7 @@ class Utils {
      * @return string Translated text.
      */
     public static function ESC_ATTR_E( string $text ): string {
-        return esc_attr_e( $text, self::$TEXT_DOMAIN ) ?? '';
+        esc_attr_e( $text, self::$TEXT_DOMAIN );
     }
 
     /**
@@ -174,7 +174,7 @@ class Utils {
      * @return string Translated text.
      */
     public static function ESC_HTML_E( string $text ): string {
-        return esc_html_e( $text, self::$TEXT_DOMAIN ) ?? '';
+        esc_html_e( $text, self::$TEXT_DOMAIN );
     }
 }
 
