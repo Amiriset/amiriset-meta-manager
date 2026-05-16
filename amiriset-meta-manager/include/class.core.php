@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
 //    DESCRIPTIONS
 //------------------------------------------------------------------------------
 /**
- * Class <b>Core</b> -- Orchestrates all plugin components via the SMM_Loader.
+ * Class <b>Core</b> -- Orchestrates all plugin components.
  *
  * @version 1.0.0-a.1
  * @package Amiriset\MetaManager
@@ -32,14 +32,12 @@ defined( 'ABSPATH' ) || exit;
  * @created 2026-05-13 23:02:31
  */
 final class Core {
-    private Loader   $loader;
     private MetaBox  $metaBox;
     private Frontend $frontend;
     private Ajax     $ajax;
     private Admin    $admin;
     
     public function __construct() {
-        $this->loader   = new Loader();
         $this->metaBox  = new MetaBox();
         $this->frontend = new Frontend();
         $this->ajax     = new Ajax();
@@ -58,8 +56,6 @@ final class Core {
         $this->frontend->init_hooks();
         $this->ajax->init_hooks();
         $this->admin->init_hooks();
-
-        $this->loader->run();
     }
     
     private function load_text_domain(): void {

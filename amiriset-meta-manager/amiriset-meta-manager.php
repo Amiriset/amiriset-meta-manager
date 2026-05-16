@@ -67,7 +67,6 @@ define('AMIRISET_META_MANAGER_DISPLAY_NAME', '🔍 Amiriset Meta Manager' );
 // Load classes
 $plugin_files = [
     'include/class.utils.php',
-    'include/class.loader.php',
     'include/class.activator.php',
     'include/class.deactivator.php',
     'include/class.keywords.php',
