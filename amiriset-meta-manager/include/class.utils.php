@@ -32,7 +32,7 @@ defined( 'ABSPATH' ) || exit;
  * @created 2026-05-15 22:14:50
  */
 class Utils {
-    private static string $TEXT_DOMAIN=AMIRISET_META_MANAGER_TEXT_DOMAIN;
+    private static string $TEXT_DOMAIN='wp-smm';
     
     // Superglobals (sanitized) 
 
