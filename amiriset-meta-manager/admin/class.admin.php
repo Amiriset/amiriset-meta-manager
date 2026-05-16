@@ -37,6 +37,9 @@ defined( 'ABSPATH' ) || exit;
  */
 class Admin {
     
+    /** @var string[] Hook suffixes returned by add_menu_page / add_submenu_page. */
+    private array $page_hooks = [];
+    
     /**
      * Init hooks.
      * 
@@ -58,7 +61,7 @@ class Admin {
      * @return void
      */
     public function register_pages(): void {
-        add_menu_page(
+        $this->page_hooks[] = add_menu_page(
             Utils::LANG('Amiriset Meta Manager'),
             Utils::LANG('Amiriset Meta'),
             'manage_options',
@@ -76,7 +79,7 @@ class Admin {
         ];
 
         foreach ( $sub_pages as [ $slug, $label, $cb ] ) {
-            add_submenu_page(
+            $this->page_hooks[] = add_submenu_page(
                 'amm-settings',
                 $label,
                 $label,
@@ -94,7 +97,7 @@ class Admin {
      */
     public function register_settings(): void {
         register_setting(
-            '_amm_options_group',
+            'amm_options_group',
             AMIRISET_META_MANAGER_OPTION_KEY,
             [
                 'sanitize_callback' => [ $this, 'sanitize_options' ],
@@ -151,9 +154,10 @@ class Admin {
 
         update_option( AMIRISET_META_MANAGER_OPTION_KEY, $opts );
 
-        wp_safe_redirect( add_query_arg(
-            [ 'page' => 'amm-settings', 'amm_saved' => '1', '#' => 'amm-analytics' ],
-            admin_url( 'admin.php' )
+        wp_safe_redirect( Utils::ADD_QUERY_ARG_WITH_FRAGMENT(
+            admin_url( 'admin.php' ),
+            [ 'page' => 'amm-settings', 'amm_saved' => '1' ],
+            'amm-analytics'
         ) );
         exit;
     }
@@ -166,10 +170,7 @@ class Admin {
      * @return void
      */
     public function enqueue_assets( string $hook ): void {
-        $amm_pages = [ 'toplevel_page_amm-settings', 'seo-meta_page_amm-pages',
-                       'seo-meta_page_amm-posts',    'seo-meta_page_amm-cpt' ];
-        // WP uses "toplevel" and "parent" slug to form hook names
-        if ( ! str_contains( $hook, 'amm-' ) ) {
+        if ( ! in_array( $hook, $this->page_hooks, true ) ) {
             return;
         }
 
@@ -239,7 +240,7 @@ class Admin {
             <?php settings_errors(AMIRISET_META_MANAGER_OPTION_KEY ); ?>
 
             <form method="post" action="options.php">
-                <?php settings_fields( '_amm_options_group' ); ?>
+                <?php settings_fields( 'amm_options_group' ); ?>
 
                 <!-- ── Section: Defaults ── -->
                 <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('Meta Tag Defaults'); ?></h2>

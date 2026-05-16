@@ -15,56 +15,45 @@
  *   Licensed under GNU GPLv3 or later.                                      *
  *                                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-namespace Amiriset\MetaManager;
-defined( 'ABSPATH' ) || exit;
-
 //------------------------------------------------------------------------------
 //    DESCRIPTIONS
 //------------------------------------------------------------------------------
 /**
- * Class <b>Core</b> -- Orchestrates all plugin components.
+ * File <b>constants</b> — shared constants.
+ *
+ * Included by the main plugin file and uninstall.php
+ * to guarantee consistent key names across all entry points.
  *
  * @version 1.0.0-a.4
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov 
- * @created 2026-05-13 23:02:31
+ * @created 2026-05-17 01:56:08
  */
-final class Core {
-    private MetaBox  $metaBox;
-    private Frontend $frontend;
-    private Ajax     $ajax;
-    private Admin    $admin;
-    
-    public function __construct() {
-        $this->metaBox  = new MetaBox();
-        $this->frontend = new Frontend();
-        $this->ajax     = new Ajax();
-        $this->admin    = new Admin();
-    }
-    
-    /**
-     * Run plugin modules.
-     * @return void
-     */
-    public function run(): void {
-        $this->load_text_domain();
 
-        // Each component registers its own hooks via init_hooks()
-        $this->metaBox->init_hooks();
-        $this->frontend->init_hooks();
-        $this->ajax->init_hooks();
-        $this->admin->init_hooks();
-    }
-    
-    private function load_text_domain(): void {
-        add_action( 'init', static function () {
-            load_plugin_textdomain(
-                    AMIRISET_META_MANAGER_TEXT_DOMAIN,
-                false,
-                dirname(AMIRISET_META_MANAGER_BASENAME) . '/languages'
-            );
-        } );
-    }
-}
+defined( 'ABSPATH' ) || exit;
+ 
+/**
+ * Plugin version.
+ */
+define( 'AMIRISET_META_MANAGER_VERSION', '1.0.0-a.4' );
+ 
+/**
+ * DB key. Single post-meta key → JSON.
+ */
+define( 'AMIRISET_META_MANAGER_DB_KEY', '_amm_meta_data' );
+ 
+/**
+ * Global settings option key.
+ */
+define( 'AMIRISET_META_MANAGER_OPTION_KEY', '_amm_options' );
+ 
+/**
+ * Text Domain.
+ */
+define( 'AMIRISET_META_MANAGER_TEXT_DOMAIN', 'amiriset-meta-manager' );
+ 
+/**
+ * Display Name.
+ */
+define( 'AMIRISET_META_MANAGER_DISPLAY_NAME', '🔍 Amiriset Meta Manager' );

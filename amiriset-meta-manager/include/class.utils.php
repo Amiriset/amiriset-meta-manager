@@ -32,7 +32,7 @@ defined( 'ABSPATH' ) || exit;
  * @created 2026-05-15 22:14:50
  */
 class Utils {
-    private static string $TEXT_DOMAIN='wp-smm';
+    private static string $TEXT_DOMAIN=AMIRISET_META_MANAGER_TEXT_DOMAIN;
     
     // Superglobals (sanitized) 
 
@@ -51,6 +51,20 @@ class Utils {
     }
 
     /**
+     * Read an array from $_GET.
+     * 
+     * @param string $key Key.
+     * @param array  $default Default value.
+     * @return array GET array or default.
+     */
+    public static function GET_ARRAY( string $key, array $default = [] ): array {
+        if ( ! isset( $_GET[ $key ] ) || ! is_array( $_GET[ $key ] ) ) {
+            return $default;
+        }
+        return $_GET[ $key ];
+    }
+    
+    /**
      * Read a string from $_POST.
      * 
      * @param string $key Key.
@@ -63,6 +77,21 @@ class Utils {
         }
         return  $_POST[ $key ];
     }
+    
+    /**
+     * Read an array from $_POST.
+     * 
+     * @param string $key Key.
+     * @param array  $default Default value.
+     * @return array POST array or default.
+     */
+    public static function POST_ARRAY( string $key, array $default = [] ): array {
+        if ( ! isset( $_POST[ $key ] ) || ! is_array( $_POST[ $key ] ) ) {
+            return $default;
+        }
+        return $_POST[ $key ];
+    }
+ 
 
     /**
      * Read an absint value from $_GET.
@@ -106,6 +135,26 @@ class Utils {
         return sanitize_key( self::GET($key) );
     }
 
+    // URL helpers
+ 
+    /**
+     * Build a URL with query parameters and an optional anchor fragment.
+     * Wrapper around add_query_arg() that also handles #fragment,
+     * which add_query_arg() cannot produce natively.
+     *
+     * @param string $base_url Base URL.
+     * @param array  $args     Query parameters.
+     * @param string $fragment Anchor fragment (without #).
+     * @return string Full URL.
+     */
+    public static function ADD_QUERY_ARG_WITH_FRAGMENT( string $base_url, array $args = [], string $fragment = '' ): string {
+        $url = add_query_arg( $args, $base_url );
+        if ( $fragment !== '' ) {
+            $url .= '#' . rawurlencode( $fragment );
+        }
+        return $url;
+    }
+    
     // i18n 
 
     /**
@@ -115,7 +164,7 @@ class Utils {
      * @return string Translated text.
      */
     public static function ESC_ATTR_E( string $text ): string {
-        return esc_attr_e( $text, self::$TEXT_DOMAIN ) ?? '';
+        esc_attr_e( $text, self::$TEXT_DOMAIN );
     }
 
     /**
@@ -145,7 +194,7 @@ class Utils {
      * @return string Translated text.
      */
     public static function ESC_HTML_E( string $text ): string {
-        return esc_html_e( $text, self::$TEXT_DOMAIN ) ?? '';
+        esc_html_e( $text, self::$TEXT_DOMAIN );
     }
 }
 
