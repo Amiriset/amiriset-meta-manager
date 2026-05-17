@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
  * Stores/reads a single JSON object under the key defined in 
  * AMIRISET_META_MANAGER_META_KEY.
  *
- * @version 1.0.0-a.4
+ * @version 1.0.0-a.5
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov 
@@ -127,9 +127,9 @@ class MetaBox {
             'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
             'nonce'      => wp_create_nonce( 'amm_ajax_nonce' ),
             'postId'     => get_the_ID(),
-            'minSymbols' => $options['keyword_min_symbols'] ?? 4,
-            'maxWords'   => $options['keyword_max_words']   ?? 25,
-            'lang'       => $options['keyword_lang']        ?? '',
+            'minSymbols' => $options['kw_min_symbols'] ?? 4,
+            'maxWords'   => $options['kw_max_words']   ?? 10,
+            'lang'       => $options['kw_lang']        ?? 'auto',
             'i18n'       => [
                 'generating'  => Utils::LANG('Generating…'),
                 'addKeyword'  => Utils::LANG('Click a keyword to add it'),

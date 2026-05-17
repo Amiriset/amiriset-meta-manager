@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
  *  on the frontend. 
  * Hooked into wp_head (priority 1 — before theme outputs anything)
  *
- * @version 1.0.0-a.4
+ * @version 1.0.0-a.5
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov 
@@ -110,8 +110,8 @@ class Frontend {
         // Open Graph
         $og_title = $meta['og_title'] ?: ( $meta['title'] ?: get_the_title( $post_id ) );
         $og_desc  = $meta['og_description'] ?: $desc;
-        $og_image = $meta['og_image'] ?: ( $opts['default_og_image'] ?? '' );
-        $og_type  = $meta['og_type'] ?: ( $opts['default_og_type'] ?? 'website' );
+        $og_image = $meta['og_image'] ?: ( $opts['og_default_image'] ?? '' );
+        $og_type  = $meta['og_type'] ?: ( $opts['og_default_type'] ?? 'website' );
 
         printf( '<meta property="og:title" content="%s">' . "\n",       esc_attr( $og_title ) );
         printf( '<meta property="og:type" content="%s">' . "\n",        esc_attr( $og_type ) );
