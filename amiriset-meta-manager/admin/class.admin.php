@@ -112,7 +112,7 @@ class Admin {
         check_admin_referer( 'amm_save_settings' );
 
         $tab  = sanitize_key( Utils::POST( 'amm_tab', 'seo' ) );
-        $opts = get_option( AMIRISET_META_MANAGER_OPTION_KEY, Activator::defaults() );
+        $opts = Utils::GET_OPTIONS();
 
         switch ( $tab ) {
             case 'technical':
@@ -246,7 +246,7 @@ class Admin {
             wp_die( Utils::ESC_HTML('Access denied.') );
         }
 
-        $opts      = get_option( AMIRISET_META_MANAGER_OPTION_KEY, Activator::defaults() );
+        $opts      = Utils::GET_OPTIONS();
         $active    = sanitize_key( Utils::GET( 'tab', 'seo' ) );
         if ( ! isset( self::TABS[ $active ] ) ) {
             $active = 'seo';

@@ -68,7 +68,7 @@ class Ajax {
         }
 
         // Read options
-        $opts       = get_option(AMIRISET_META_MANAGER_OPTION_KEY, Activator::defaults() );
+        $opts       = Utils::GET_OPTIONS();
         $minSymbols = absint( $opts['kw_min_symbols'] ?? 4 );
         $maxWords   = absint( $opts['kw_max_words']   ?? 10 );
 

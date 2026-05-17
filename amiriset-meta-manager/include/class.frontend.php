@@ -37,7 +37,7 @@ class Frontend {
     private array $options;
 
     public function __construct() {
-        $this->options = get_option(AMIRISET_META_MANAGER_OPTION_KEY, Activator::defaults() );
+        $this->options = Utils::GET_OPTIONS();
     }
 
     public function init_hooks(): void {

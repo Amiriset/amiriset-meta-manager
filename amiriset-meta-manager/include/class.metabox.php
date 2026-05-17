@@ -78,7 +78,7 @@ class MetaBox {
      * @return void
      */
     public function register_meta_box(): void {
-        $options    = get_option(AMIRISET_META_MANAGER_OPTION_KEY, Activator::defaults() );
+        $options    = Utils::GET_OPTIONS();
         $post_types = $options['enabled_post_types'] ?? [ 'post', 'page' ];
 
         foreach ( $post_types as $pt ) {
@@ -121,7 +121,7 @@ class MetaBox {
             true
         );
 
-        $options = get_option( AMIRISET_META_MANAGER_OPTION_KEY, Activator::defaults() );
+        $options = Utils::GET_OPTIONS();
 
         wp_localize_script( 'amm-admin-js', 'ammData', [
             'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
@@ -318,7 +318,7 @@ class MetaBox {
             <!-- ── Tab: Twitter / X Card ── -->
             <div id="amm-tab-twitter" class="amm-tab-content">
                 <?php
-                $opts        = get_option(AMIRISET_META_MANAGER_OPTION_KEY, Activator::defaults() );
+                $opts        = Utils::GET_OPTIONS();
                 $tw_site_global = $opts['twitter_site'] ?? '';
                 ?>
                 <p class="amm-copy-og-wrap">

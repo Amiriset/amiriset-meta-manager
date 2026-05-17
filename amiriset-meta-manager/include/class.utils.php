@@ -134,6 +134,21 @@ class Utils {
         }
         return sanitize_key( self::GET($key) );
     }
+    
+    // Options helpers
+
+    /**
+     * Load plugin options merged with defaults.
+     * Ensures every expected key exists even if the DB value
+     * was saved by an older version of the plugin.
+     *
+     * @return array Full options array.
+     */
+    public static function GET_OPTIONS(): array {
+        $stored   = get_option( AMIRISET_META_MANAGER_OPTION_KEY, [] );
+        $defaults = Activator::defaults();
+        return array_merge( $defaults, is_array( $stored ) ? $stored : [] );
+    }
 
     // URL helpers
  
