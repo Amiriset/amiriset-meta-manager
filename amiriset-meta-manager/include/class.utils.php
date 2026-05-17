@@ -163,7 +163,7 @@ class Utils {
      * @param string $text Original text.
      * @return string Translated text.
      */
-    public static function ESC_ATTR_E( string $text ): string {
+    public static function ESC_ATTR_E( string $text ): void {
         esc_attr_e( $text, self::$TEXT_DOMAIN );
     }
 
@@ -193,7 +193,7 @@ class Utils {
      * @param string $text Original text.
      * @return string Translated text.
      */
-    public static function ESC_HTML_E( string $text ): string {
+    public static function ESC_HTML_E( string $text ): void {
         esc_html_e( $text, self::$TEXT_DOMAIN );
     }
 }

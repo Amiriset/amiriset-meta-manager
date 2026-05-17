@@ -32,7 +32,7 @@
 
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
-require_once __DIR__ . '/include/constants.php';
+include_once('constants.php');
 
 global $wpdb;
 

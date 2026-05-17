@@ -28,7 +28,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Shared constants (also loaded by uninstall.php)
-require_once __DIR__ . '/include/constants.php';
+include __DIR__ . '\include\constants.php';
 
 /**
  * Plugin main file.
