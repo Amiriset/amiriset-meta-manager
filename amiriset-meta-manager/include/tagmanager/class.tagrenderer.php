@@ -15,45 +15,51 @@
  *   Licensed under GNU GPLv3 or later.                                      *
  *                                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+namespace Amiriset\MetaManager;
+defined( 'ABSPATH' ) || exit;
+
 //------------------------------------------------------------------------------
 //    DESCRIPTIONS
 //------------------------------------------------------------------------------
 /**
- * File <b>constants</b> — shared constants.
- *
- * Included by the main plugin file and uninstall.php
- * to guarantee consistent key names across all entry points.
+ * Class <b>TagRenderer</b> -- without description.
  *
  * @version 1.0.0-a.5
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov 
- * @created 2026-05-17 01:56:08
+ * @created 2026-05-17 17:40:07
  */
+class TagRenderer {
 
-defined( 'ABSPATH' ) || exit;
- 
-/**
- * Plugin version.
- */
-define( 'AMIRISET_META_MANAGER_VERSION', '1.0.0-a.5' );
- 
-/**
- * DB key. Single post-meta key → JSON.
- */
-define( 'AMIRISET_META_MANAGER_DB_KEY', '_amm_meta_data' );
- 
-/**
- * Global settings option key.
- */
-define( 'AMIRISET_META_MANAGER_OPTION_KEY', '_amm_options' );
- 
-/**
- * Text Domain.
- */
-define( 'AMIRISET_META_MANAGER_TEXT_DOMAIN', 'amiriset-meta-manager' );
- 
-/**
- * Display Name.
- */
-define( 'AMIRISET_META_MANAGER_DISPLAY_NAME', '🔍 Amiriset Meta Manager' );
+    public function getHtml(TagCollection $collection): string {
+        $html = "";
+        foreach($collection->getAll() as $key => $value) {
+            if (is_array($value)) {
+                $count = count($value);
+                for ($i = 0; $i < $count; $i++) {
+                    $html .= $value[$i]->toHtml() . "\n";
+                }	
+            } else {
+                $html .= $value->toHtml() . "\n";
+            }
+        }
+        return $html;
+    }
+    
+    public function toHtml(TagCollection $collection): void {
+        echo $this->getHtml($collection);
+    }
+    
+    public function dump(TagCollection $collection): void {
+        echo "<ul>\n";
+        foreach($collection->getAll() as $key => $value) {
+            echo "<li><p>$key</p>\n";
+            echo "<code>\n";
+            var_dump($value);
+            echo "</code>\n</li>\n";
+        }
+        echo "</ul>\n";
+    }
+}
