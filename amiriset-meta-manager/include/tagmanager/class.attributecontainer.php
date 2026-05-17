@@ -71,8 +71,8 @@ abstract class AttributeContainer {
 	public function toArray(): array {
 		return $this->content;
 	}
-        
-        /**
+	
+	/**
 	 * Deterministic fingerprint of all attributes.
 	 * Used for diff-merge operations on array-valued collection keys.
 	 *

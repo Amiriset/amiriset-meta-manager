@@ -28,7 +28,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Shared constants (also loaded by uninstall.php)
-include __DIR__ . '\include\constants.php';
+include_once('constants.php');
 
 /**
  * Plugin main file.
@@ -50,9 +50,11 @@ define( 'AMIRISET_META_MANAGER_BASENAME', plugin_basename( __FILE__ ) );
 // Load classes
 $plugin_files = [
     'include/class.utils.php',
+    'include/class.options.php',
     'include/class.activator.php',
     'include/class.deactivator.php',
     'include/class.keywords.php',
+
     // TagManager — object model (dependency order)
     'include/tagmanager/class.attributecontainer.php',
     'include/tagmanager/class.abstracttag.php',
@@ -67,6 +69,7 @@ $plugin_files = [
     'include/tagmanager/class.tagserializer.php',
     'include/tagmanager/class.tagrenderer.php',
     'include/tagmanager/class.tagmanager.php',
+
     // Plugin components
     'include/class.metabox.php',
     'include/class.frontend.php',

@@ -21,7 +21,7 @@
  * File <b>amm-admin.js</b> -- Amiriset Meta Manager — Admin JS. 
  * Dependencies: jQuery, wp.media (enqueued via wp_enqueue_media)
  *
- * @version 1.0.0-a.4
+ * @version 1.0.0-a.5
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov
@@ -31,6 +31,17 @@
 /* global ammData, wp */
 (function ($) {
     'use strict';
+
+    // ── Override checkboxes (Technical tab) ───────────────────────────────────
+
+    $(document).on('change', '.amm-override-cb', function () {
+        var $cb    = $(this);
+        var $field = $('#' + $cb.data('target'));
+        $field.prop('disabled', !$cb.is(':checked'));
+        if (!$cb.is(':checked')) {
+            $field.val('');
+        }
+    });
 
     // ── Tabs ─────────────────────────────────────────────────────────────────
 
@@ -278,3 +289,6 @@
     }
 
 }(jQuery));
+
+
+

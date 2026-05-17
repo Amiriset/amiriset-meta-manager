@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
  * Registered actions (admin-only, logged-in):
  * amm_generate_keywords  — returns suggested keywords for a post
  *
- * @version 1.0.0-a.1
+ * @version 1.0.0-a.5
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov 
@@ -68,13 +68,13 @@ class Ajax {
         }
 
         // Read options
-        $opts       = get_option(AMIRISET_META_MANAGER_OPTION_KEY, Activator::defaults() );
-        $minSymbols = absint( $opts['keyword_min_symbols'] ?? 4 );
-        $maxWords   = absint( $opts['keyword_max_words']   ?? 25 );
+        $opts       = Utils::GET_OPTIONS();
+        $minSymbols = $opts->getInt( 'kw_min_symbols', 4 );
+        $maxWords   = $opts->getInt( 'kw_max_words', 10 );
 
         // Lang: user can override per-request (from the dropdown in the UI)
-        $lang = sanitize_text_field( Utils::POST('lang', ($opts['keyword_lang'] ?? '') ));
-        if ( '' === $lang ) {
+        $lang = sanitize_text_field( Utils::POST( 'lang', $opts->get( 'kw_lang', 'auto' ) ) );
+        if ( 'auto' === $lang || '' === $lang ) {
             $lang = Keywords::detectLang( $post->post_content );
         }
 

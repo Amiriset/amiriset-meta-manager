@@ -29,7 +29,7 @@ defined( 'ABSPATH' ) || exit;
  *   – Posts     (list of posts + their meta data)
  *   – CPT       (pick a CPT → list its posts + meta data)
  *
- * @version 1.0.0-a.4
+ * @version 1.0.0-a.5
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov
@@ -40,6 +40,16 @@ class Admin {
     /** @var string[] Hook suffixes returned by add_menu_page / add_submenu_page. */
     private array $page_hooks = [];
     
+    /** @var string[] Settings tabs. */
+    private const TABS = [
+        'seo'       => 'SEO',
+        'technical' => 'Technical',
+        'og'        => 'Open Graph',
+        'twitter'   => 'Twitter / X',
+        'jsonld'    => 'JSON-LD',
+        'scripts'   => 'Scripts',
+    ];
+
     /**
      * Init hooks.
      * 
@@ -47,11 +57,9 @@ class Admin {
      */
     public function init_hooks(): void {
         add_action( 'admin_menu',            [ $this, 'register_pages'  ] );
-        add_action( 'admin_init',            [ $this, 'register_settings' ] );
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets'  ] );
         add_filter( 'plugin_action_links_' . AMIRISET_META_MANAGER_BASENAME, [ $this, 'plugin_action_links' ] );
-        // Analytics fields bypass Settings API to preserve <script> tags
-        add_action( 'admin_post_amm_save_analytics', [ $this, 'handle_save_analytics' ] );
+        add_action( 'admin_post_amm_save_settings', [ $this, 'handle_save_settings' ] );
     }
 
     
@@ -91,73 +99,79 @@ class Admin {
     }
     
     /**
-     * Register settings.
-     * 
+     * Unified settings save handler.
+     * All tabs submit to this single endpoint.
+     *
      * @return void
      */
-    public function register_settings(): void {
-        register_setting(
-            'amm_options_group',
-            AMIRISET_META_MANAGER_OPTION_KEY,
-            [
-                'sanitize_callback' => [ $this, 'sanitize_options' ],
-                'default'           => Activator::defaults(),
-            ]
-        );
-    }
-
-    /**
-     * Sinitize options.
-     * Empty option replace with defaults.
-     * 
-     * @param type $raw
-     * @return array
-     */
-    public function sanitize_options( $raw ): array {
-        $defaults = Activator::defaults();
-
-        return [
-            'default_robots'       => sanitize_text_field( $raw['default_robots']      ?? $defaults['default_robots'] ),
-            'default_og_type'      => sanitize_text_field( $raw['default_og_type']     ?? $defaults['default_og_type'] ),
-            'default_og_image'     => esc_url_raw(          $raw['default_og_image']    ?? '' ),
-            'default_title_suffix' => sanitize_text_field( $raw['default_title_suffix'] ?? '' ),
-            // Admin-only fields (manage_options cap) — strip slashes only, allow <script> tags
-            'analytics_head'       => wp_unslash( $raw['analytics_head'] ?? '' ),
-            'analytics_body'       => wp_unslash( $raw['analytics_body'] ?? '' ),
-            'enabled_post_types'   => array_map( 'sanitize_key', (array) ( $raw['enabled_post_types'] ?? [ 'post', 'page' ] ) ),
-            'keyword_min_symbols'  => absint( $raw['keyword_min_symbols'] ?? 4 ),
-            'keyword_max_words'    => absint( $raw['keyword_max_words']   ?? 25 ),
-            'keyword_lang'         => sanitize_key( $raw['keyword_lang']  ?? '' ),
-            'twitter_site'         => sanitize_text_field( $raw['twitter_site'] ?? '' ),
-            'twitter_card'         => sanitize_text_field( $raw['twitter_card'] ?? 'summary_large_image' ),
-
-        ];
-    }
-    
-    /**
-     * AJAX/POST request handler for saving analytics codes.
-     * 
-     * @return void none
-     */
-    public function handle_save_analytics(): void {
+    public function handle_save_settings(): void {
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_die( Utils::ESC_HTML('Access denied.') );
         }
 
-        check_admin_referer( 'amm_save_analytics' );
+        check_admin_referer( 'amm_save_settings' );
 
-        $opts = get_option(AMIRISET_META_MANAGER_OPTION_KEY, Activator::defaults() );
+        $tab  = sanitize_key( Utils::POST( 'amm_tab', 'seo' ) );
+        $opts = Utils::GET_OPTIONS();
 
-        // wp_unslash only — no kses — admin-only field, script tags must survive
-        $opts['analytics_head'] = wp_unslash( Utils::POST('analytics_head') );
-        $opts['analytics_body'] = wp_unslash( Utils::POST('analytics_body') );
+        switch ( $tab ) {
+            case 'technical':
+                $opts->set( 'charset',          sanitize_text_field( Utils::POST('charset') ) );
+                $opts->set( 'content_language',  sanitize_text_field( Utils::POST('content_language') ) );
+                $opts->set( 'viewport',          sanitize_text_field( Utils::POST('viewport') ) );
+                $opts->set( 'theme_color',       sanitize_hex_color( Utils::POST('theme_color') ) ?: '' );
+                $opts->set( 'manifest',          esc_url_raw( Utils::POST('manifest') ) );
+                break;
 
-        update_option( AMIRISET_META_MANAGER_OPTION_KEY, $opts );
+            case 'seo':
+                $opts->set( 'distribution',    sanitize_text_field( Utils::POST('distribution') ) );
+                $opts->set( 'classification',  sanitize_text_field( Utils::POST('classification') ) );
+                $opts->set( 'copyright',       sanitize_text_field( Utils::POST('copyright') ) );
+                $opts->set( 'developer',       sanitize_text_field( Utils::POST('developer') ) );
+                $opts->set( 'default_robots',  sanitize_text_field( Utils::POST('default_robots') ) );
+                $opts->set( 'title_suffix',    sanitize_text_field( Utils::POST('title_suffix') ) );
+                $opts->set( 'enabled_post_types', array_map(
+                    'sanitize_key',
+                    Utils::POST_ARRAY( 'enabled_post_types', [ 'post', 'page' ] )
+                ) );
+                $opts->set( 'kw_min_symbols',  absint( Utils::POST('kw_min_symbols') ) ?: 4 );
+                $opts->set( 'kw_max_words',    absint( Utils::POST('kw_max_words') ) ?: 10 );
+                $opts->set( 'kw_lang',         sanitize_key( Utils::POST('kw_lang') ) );
+                break;
+
+            case 'og':
+                $opts->set( 'og_site_name',      sanitize_text_field( Utils::POST('og_site_name') ) );
+                $opts->set( 'og_default_image',  esc_url_raw( Utils::POST('og_default_image') ) );
+                $opts->set( 'og_default_locale', sanitize_text_field( Utils::POST('og_default_locale') ) );
+                $opts->set( 'og_default_type',   sanitize_text_field( Utils::POST('og_default_type') ) );
+                break;
+
+            case 'twitter':
+                $opts->set( 'twitter_site', sanitize_text_field( Utils::POST('twitter_site') ) );
+                $opts->set( 'twitter_card', sanitize_text_field( Utils::POST('twitter_card') ) );
+                break;
+
+            case 'jsonld':
+                $opts->set( 'jsonld_entity_type',  sanitize_text_field( Utils::POST('jsonld_entity_type') ) );
+                $opts->set( 'jsonld_entity_name',  sanitize_text_field( Utils::POST('jsonld_entity_name') ) );
+                $opts->set( 'jsonld_entity_url',   esc_url_raw( Utils::POST('jsonld_entity_url') ) );
+                $opts->set( 'jsonld_entity_logo',  esc_url_raw( Utils::POST('jsonld_entity_logo') ) );
+                $opts->set( 'jsonld_website_name', sanitize_text_field( Utils::POST('jsonld_website_name') ) );
+                $opts->set( 'jsonld_website_alt',  sanitize_text_field( Utils::POST('jsonld_website_alt') ) );
+                break;
+
+            case 'scripts':
+                $opts->set( 'analytics_head', wp_unslash( Utils::POST('analytics_head') ) );
+                $opts->set( 'analytics_body', wp_unslash( Utils::POST('analytics_body') ) );
+                break;
+        }
+
+        $opts->save();
 
         wp_safe_redirect( Utils::ADD_QUERY_ARG_WITH_FRAGMENT(
             admin_url( 'admin.php' ),
-            [ 'page' => 'amm-settings', 'amm_saved' => '1' ],
-            'amm-analytics'
+            [ 'page' => 'amm-settings', 'tab' => $tab, 'amm_saved' => '1' ],
+            ''
         ) );
         exit;
     }
@@ -222,7 +236,7 @@ class Admin {
 
     
     /**
-     * Page settings.
+     * Settings page — tabbed layout.
      * 
      * @return void
      */
@@ -231,224 +245,433 @@ class Admin {
             wp_die( Utils::ESC_HTML('Access denied.') );
         }
 
-        $opts     = get_option(AMIRISET_META_MANAGER_OPTION_KEY, Activator::defaults() );
-        $all_cpts = $this->get_all_public_cpts();
+        $opts      = Utils::GET_OPTIONS();
+        $active    = sanitize_key( Utils::GET( 'tab', 'seo' ) );
+        if ( ! isset( self::TABS[ $active ] ) ) {
+            $active = 'seo';
+        }
         ?>
         <div class="wrap amm-admin-wrap">
-            <h1><?php Utils::ESC_HTML_E('Amiriset Meta Manager — Settings' ); ?></h1>
+            <h1><?php Utils::ESC_HTML_E('Amiriset Meta Manager — Settings'); ?></h1>
 
-            <?php settings_errors(AMIRISET_META_MANAGER_OPTION_KEY ); ?>
+            <?php if ( isset( $_GET['amm_saved'] ) ) : ?>
+                <div class="notice notice-success is-dismissible">
+                    <p><?php Utils::ESC_HTML_E('Settings saved.'); ?></p>
+                </div>
+            <?php endif; ?>
 
-            <form method="post" action="options.php">
-                <?php settings_fields( 'amm_options_group' ); ?>
+            <nav class="nav-tab-wrapper amm-settings-tabs">
+                <?php foreach ( self::TABS as $slug => $label ) :
+                    $url   = admin_url( 'admin.php?page=amm-settings&tab=' . $slug );
+                    $class = ( $slug === $active ) ? 'nav-tab nav-tab-active' : 'nav-tab';
+                    ?>
+                    <a href="<?php echo esc_url( $url ); ?>" class="<?php echo esc_attr( $class ); ?>">
+                        <?php Utils::ESC_HTML_E( $label ); ?>
+                    </a>
+                <?php endforeach; ?>
+            </nav>
 
-                <!-- ── Section: Defaults ── -->
-                <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('Meta Tag Defaults'); ?></h2>
-                <table class="form-table amm-settings-table">
-                    <tr>
-                        <th><?php Utils::ESC_HTML_E('Default Robots'); ?></th>
-                        <td>
-                            <input type="text" name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[default_robots]"
-                                   value="<?php echo esc_attr( $opts['default_robots'] ); ?>">
-                            <p class="description"><?php Utils::ESC_HTML_E('e.g. index, follow'); ?></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><?php Utils::ESC_HTML_E('Default OG Type'); ?></th>
-                        <td>
-                            <select name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[default_og_type]">
-                                <?php foreach ( [ 'website', 'article', 'product' ] as $t ) : ?>
-                                    <option value="<?php echo esc_attr( $t ); ?>"
-                                        <?php selected( $opts['default_og_type'], $t ); ?>>
-                                        <?php echo esc_html( $t ); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><?php Utils::ESC_HTML_E('Default OG Image'); ?></th>
-                        <td>
-                            <div class="amm-og-image-wrap">
-                                <?php if ( $opts['default_og_image'] ) : ?>
-                                    <img src="<?php echo esc_url( $opts['default_og_image'] ); ?>" class="amm-og-preview" alt="">
-                                <?php endif; ?>
-                                <input type="hidden" id="amm_default_og_image"
-                                       name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[default_og_image]"
-                                       value="<?php echo esc_attr( $opts['default_og_image'] ); ?>">
-                                <button type="button" class="button amm-media-btn" data-target="amm_default_og_image">
-                                    <?php Utils::ESC_HTML_E('Select image'); ?>
-                                </button>
-                                <?php if ( $opts['default_og_image'] ) : ?>
-                                    <button type="button" class="button amm-media-remove">
-                                        <?php Utils::ESC_HTML_E('Remove'); ?>
-                                    </button>
-                                <?php endif; ?>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><?php Utils::ESC_HTML_E('Title Suffix'); ?></th>
-                        <td>
-                            <input type="text" name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[default_title_suffix]"
-                                   value="<?php echo esc_attr( $opts['default_title_suffix'] ); ?>">
-                            <p class="description"><?php Utils::ESC_HTML_E('Appended to SEO title (e.g. " | My Site").'); ?></p>
-                        </td>
-                    </tr>
-                </table>
+            <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+                <input type="hidden" name="action" value="amm_save_settings">
+                <input type="hidden" name="amm_tab" value="<?php echo esc_attr( $active ); ?>">
+                <?php wp_nonce_field( 'amm_save_settings' ); ?>
 
-                <!-- ── Section: Post types ── -->
-                <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('Enabled Post Types'); ?></h2>
-                <p class="description"><?php Utils::ESC_HTML_E('The SEO meta box will appear on these post types.'); ?></p>
-                <table class="form-table amm-settings-table">
-                    <tr>
-                        <th><?php Utils::ESC_HTML_E('Post Types'); ?></th>
-                        <td>
-                            <?php
-                            $enabled  = $opts['enabled_post_types'] ?? [ 'post', 'page' ];
-                            $builtins = [ 'post' => 'Posts', 'page' => 'Pages' ];
-                            foreach ( array_merge( $builtins, $all_cpts ) as $slug => $label ) :
-                                ?>
-                                <label class="amm-checkbox-label">
-                                    <input type="checkbox"
-                                           name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[enabled_post_types][]"
-                                           value="<?php echo esc_attr( $slug ); ?>"
-                                           <?php checked( in_array( $slug, $enabled, true ) ); ?>>
-                                    <?php echo esc_html( $label . ' (' . $slug . ')' ); ?>
-                                </label><br>
-                            <?php endforeach; ?>
-                        </td>
-                    </tr>
-                </table>
+                <?php
+                switch ( $active ) {
+                    case 'technical': $this->render_tab_technical( $opts ); break;
+                    case 'seo':       $this->render_tab_seo( $opts );       break;
+                    case 'og':        $this->render_tab_og( $opts );        break;
+                    case 'twitter':   $this->render_tab_twitter( $opts );   break;
+                    case 'jsonld':    $this->render_tab_jsonld( $opts );     break;
+                    case 'scripts':   $this->render_tab_scripts( $opts );   break;
+                }
+                ?>
 
-                <!-- ── Section: Keywords ── -->
-                <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('Keyword Extractor Settings'); ?></h2>
-                <table class="form-table amm-settings-table">
-                    <tr>
-                        <th><?php Utils::ESC_HTML_E( 'Min. word length'); ?></th>
-                        <td>
-                            <input type="number" min="2" max="10"
-                                   name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[keyword_min_symbols]"
-                                   value="<?php echo esc_attr( $opts['keyword_min_symbols'] ); ?>">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><?php Utils::ESC_HTML_E('Max. keywords'); ?></th>
-                        <td>
-                            <input type="number" min="5" max="100"
-                                   name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[keyword_max_words]"
-                                   value="<?php echo esc_attr( $opts['keyword_max_words'] ); ?>">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><?php Utils::ESC_HTML_E('Default language'); ?></th>
-                        <td>
-                            <select name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[keyword_lang]">
-                                <option value=""   <?php selected( $opts['keyword_lang'], '' );   ?>><?php Utils::ESC_HTML_E('Auto-detect'); ?></option>
-                                <option value="en" <?php selected( $opts['keyword_lang'], 'en' ); ?>>English</option>
-                                <option value="ru" <?php selected( $opts['keyword_lang'], 'ru' ); ?>>Русский</option>
-                                <option value="uk" <?php selected( $opts['keyword_lang'], 'uk' ); ?>>Українська</option>
-                            </select>
-                        </td>
-                    </tr>
-                </table>
-
-                <!-- ── Section: Twitter / X ── -->
-                <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('Twitter / X Card Defaults'); ?></h2>
-                <table class="form-table amm-settings-table">
-                    <tr>
-                        <th><?php Utils::ESC_HTML_E('Site Handle'); ?></th>
-                        <td>
-                            <input type="text"
-                                   name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[twitter_site]"
-                                   value="<?php echo esc_attr( $opts['twitter_site'] ?? '' ); ?>"
-                                   placeholder="@yoursite">
-                            <p class="description">
-                                <?php Utils::ESC_HTML_E('twitter:site — the @username of the website. Output on every singular page.'); ?>
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><?php Utils::ESC_HTML_E('Default Card Type'); ?></th>
-                        <td>
-                            <select name="<?php echo AMIRISET_META_MANAGER_OPTION_KEY; ?>[twitter_card]">
-                                <?php
-                                $card_types = [
-                                    'summary'             => 'summary',
-                                    'summary_large_image' => 'summary_large_image',
-                                    'app'                 => 'app',
-                                    'player'              => 'player',
-                                ];
-                                $current_card = $opts['twitter_card'] ?? 'summary_large_image';
-                                foreach ( $card_types as $val => $label ) {
-                                    printf(
-                                        '<option value="%s" %s>%s</option>',
-                                        esc_attr( $val ),
-                                        selected( $current_card, $val, false ),
-                                        esc_html( $label )
-                                    );
-                                }
-                                ?>
-                            </select>
-                            <p class="description">
-                                <?php Utils::ESC_HTML_E('Per-post override is available in the meta box Twitter tab.'); ?>
-                            </p>
-                        </td>
-                    </tr>
-                </table>
                 <?php submit_button(); ?>
             </form>
-            
-            <!-- ── Analytics form (separate — bypasses Settings API to keep <script> tags) ── -->
-            <div id="amm-analytics">
-                <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('Analytics & Scripts'); ?></h2>
-                <?php if ( isset( $_GET['amm_saved'] ) ) : ?>
-                    <div class="notice notice-success is-dismissible">
-                        <p><?php Utils::ESC_HTML_E('Analytics scripts saved.'); ?></p>
-                    </div>
-                <?php endif; ?>
-                <p class="description" style="margin-bottom:12px">
-                    <?php Utils::ESC_HTML_E('Paste full HTML blocks (including &lt;script&gt; tags) or raw JavaScript. Tags are preserved as-is.'); ?>
-                </p>
-                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-                    <input type="hidden" name="action" value="amm_save_analytics">
-                    <?php wp_nonce_field( 'amm_save_analytics' ); ?>
-                    <table class="form-table amm-settings-table">
-                        <tr>
-                            <th>
-                                <label for="amm_analytics_head">
-                                    <?php Utils::ESC_HTML_E('&lt;head&gt; Scripts'); ?>
-                                </label>
-                            </th>
-                            <td>
-                                <textarea id="amm_analytics_head" name="analytics_head" rows="8"
-                                          placeholder="&lt;!-- Google Tag Manager, Meta Pixel, etc --&gt;"
-                                ><?php echo esc_textarea( $opts['analytics_head'] ); ?></textarea>
-                                <p class="description">
-                                    <?php Utils::ESC_HTML_E('Injected inside &lt;head&gt; (before &lt;/head&gt;). Wrap JS in &lt;script&gt; tags.'); ?>
-                                </p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>
-                                <label for="amm_analytics_body">
-                                    <?php Utils::ESC_HTML_E( '&lt;body&gt; Scripts'); ?>
-                                </label>
-                            </th>
-                            <td>
-                                <textarea id="amm_analytics_body" name="analytics_body" rows="8"
-                                          placeholder="&lt;!-- GTM noscript, etc --&gt;"
-                                ><?php echo esc_textarea( $opts['analytics_body'] ); ?></textarea>
-                                <p class="description">
-                                    <?php Utils::ESC_HTML_E('Injected right after &lt;body&gt; open tag (requires theme to call wp_body_open()).' ); ?>
-                                </p>
-                            </td>
-                        </tr>
-                    </table>
-                    <?php submit_button( Utils::LANG( 'Save Analytics Scripts' ), 'primary', 'amm_analytics_submit' ); ?>
-                </form>
-            </div>
         </div>
+        <?php
+    }
+
+
+    // ── Tab renderers ────────────────────────────────────────────────────────
+
+    /**
+     * Technical tab — override-only fields.
+     */
+    private function render_tab_technical( Options $opts ): void {
+        $fields = [
+            'charset'          => [ 'Charset',          'e.g. UTF-8 (usually handled by WordPress)' ],
+            'content_language' => [ 'Content-Language',  'e.g. en-GB' ],
+            'viewport'         => [ 'Viewport',          'e.g. width=device-width, initial-scale=1 (usually handled by theme)' ],
+            'theme_color'      => [ 'Theme Color',       'Hex color for mobile browser chrome, e.g. #ffffff' ],
+            'manifest'         => [ 'Manifest (PWA)',    'URL to manifest.json' ],
+        ];
+        ?>
+        <table class="form-table amm-settings-table">
+            <?php foreach ( $fields as $key => $info ) :
+                $value    = $opts->get( $key );
+                $has_val  = ( $value !== '' );
+                $field_id = 'amm_' . $key;
+                ?>
+                <tr>
+                    <th><label for="<?php echo esc_attr( $field_id ); ?>"><?php Utils::ESC_HTML_E( $info[0] ); ?></label></th>
+                    <td>
+                        <label class="amm-override-label">
+                            <input type="checkbox"
+                                   class="amm-override-cb"
+                                   data-target="<?php echo esc_attr( $field_id ); ?>"
+                                   <?php checked( $has_val ); ?>>
+                            <?php Utils::ESC_HTML_E('Override'); ?>
+                        </label>
+                        <input type="text"
+                               id="<?php echo esc_attr( $field_id ); ?>"
+                               name="<?php echo esc_attr( $key ); ?>"
+                               value="<?php echo esc_attr( $value ); ?>"
+                               class="regular-text"
+                               <?php disabled( ! $has_val ); ?>>
+                        <p class="description"><?php Utils::ESC_HTML_E( $info[1] ); ?></p>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </table>
+        <?php
+    }
+
+    /**
+     * SEO tab — robots, distribution, classification, copyright, post types, keywords.
+     */
+    private function render_tab_seo( Options $opts ): void {
+        $all_cpts = $this->get_all_public_cpts();
+        $enabled  = $opts->getArray( 'enabled_post_types', [ 'post', 'page' ] );
+        ?>
+        <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('SEO Defaults'); ?></h2>
+        <table class="form-table amm-settings-table">
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Default Robots'); ?></th>
+                <td>
+                    <input type="text" name="default_robots"
+                           value="<?php echo esc_attr( $opts->get('default_robots') ); ?>"
+                           class="regular-text">
+                    <p class="description"><?php Utils::ESC_HTML_E('e.g. index, follow'); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Title Suffix'); ?></th>
+                <td>
+                    <input type="text" name="title_suffix"
+                           value="<?php echo esc_attr( $opts->get('title_suffix') ); ?>"
+                           class="regular-text">
+                    <p class="description"><?php Utils::ESC_HTML_E('Appended to SEO title (e.g. " | My Site").'); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Distribution'); ?></th>
+                <td>
+                    <input type="text" name="distribution"
+                           value="<?php echo esc_attr( $opts->get('distribution') ); ?>"
+                           class="regular-text"
+                           placeholder="global">
+                </td>
+            </tr>
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Classification'); ?></th>
+                <td>
+                    <input type="text" name="classification"
+                           value="<?php echo esc_attr( $opts->get('classification') ); ?>"
+                           class="regular-text"
+                           placeholder="e.g. IT, Education, Business">
+                </td>
+            </tr>
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Copyright'); ?></th>
+                <td>
+                    <input type="text" name="copyright"
+                           value="<?php echo esc_attr( $opts->get('copyright') ); ?>"
+                           class="regular-text">
+                </td>
+            </tr>
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Developer'); ?></th>
+                <td>
+                    <input type="text" name="developer"
+                           value="<?php echo esc_attr( $opts->get('developer') ); ?>"
+                           class="regular-text">
+                </td>
+            </tr>
+        </table>
+
+        <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('Enabled Post Types'); ?></h2>
+        <p class="description"><?php Utils::ESC_HTML_E('The SEO meta box will appear on these post types.'); ?></p>
+        <table class="form-table amm-settings-table">
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Post Types'); ?></th>
+                <td>
+                    <?php
+                    $builtins = [ 'post' => 'Posts', 'page' => 'Pages' ];
+                    foreach ( array_merge( $builtins, $all_cpts ) as $slug => $label ) : ?>
+                        <label class="amm-checkbox-label">
+                            <input type="checkbox" name="enabled_post_types[]"
+                                   value="<?php echo esc_attr( $slug ); ?>"
+                                   <?php checked( in_array( $slug, $enabled, true ) ); ?>>
+                            <?php echo esc_html( $label . ' (' . $slug . ')' ); ?>
+                        </label><br>
+                    <?php endforeach; ?>
+                </td>
+            </tr>
+        </table>
+
+        <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('Keyword Extractor Settings'); ?></h2>
+        <table class="form-table amm-settings-table">
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Min. word length'); ?></th>
+                <td>
+                    <input type="number" min="2" max="10" name="kw_min_symbols"
+                           value="<?php echo esc_attr( $opts->get('kw_min_symbols') ); ?>">
+                </td>
+            </tr>
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Max. keywords'); ?></th>
+                <td>
+                    <input type="number" min="5" max="100" name="kw_max_words"
+                           value="<?php echo esc_attr( $opts->get('kw_max_words') ); ?>">
+                </td>
+            </tr>
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Default language'); ?></th>
+                <td>
+                    <select name="kw_lang">
+                        <option value="auto" <?php selected( $opts->get('kw_lang'), 'auto' ); ?>><?php Utils::ESC_HTML_E('Auto-detect'); ?></option>
+                        <option value="en"   <?php selected( $opts->get('kw_lang'), 'en' ); ?>>English</option>
+                        <option value="ru"   <?php selected( $opts->get('kw_lang'), 'ru' ); ?>>Русский</option>
+                        <option value="uk"   <?php selected( $opts->get('kw_lang'), 'uk' ); ?>>Українська</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+        <?php
+    }
+
+    /**
+     * Open Graph tab.
+     */
+    private function render_tab_og( Options $opts ): void {
+        ?>
+        <table class="form-table amm-settings-table">
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Site Name'); ?></th>
+                <td>
+                    <input type="text" name="og_site_name"
+                           value="<?php echo esc_attr( $opts->get('og_site_name') ); ?>"
+                           class="regular-text"
+                           placeholder="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
+                </td>
+            </tr>
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Default OG Type'); ?></th>
+                <td>
+                    <select name="og_default_type">
+                        <?php foreach ( [ 'website', 'article', 'product' ] as $t ) : ?>
+                            <option value="<?php echo esc_attr( $t ); ?>"
+                                <?php selected( $opts->get('og_default_type'), $t ); ?>>
+                                <?php echo esc_html( $t ); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Default Locale'); ?></th>
+                <td>
+                    <input type="text" name="og_default_locale"
+                           value="<?php echo esc_attr( $opts->get('og_default_locale') ); ?>"
+                           class="regular-text"
+                           placeholder="e.g. en_GB">
+                </td>
+            </tr>
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Default OG Image'); ?></th>
+                <td>
+                    <div class="amm-og-image-wrap">
+                        <?php if ( $opts->get('og_default_image') ) : ?>
+                            <img src="<?php echo esc_url( $opts->get('og_default_image') ); ?>" class="amm-og-preview" alt="">
+                        <?php endif; ?>
+                        <input type="hidden" id="amm_og_default_image" name="og_default_image"
+                               value="<?php echo esc_attr( $opts->get('og_default_image') ); ?>">
+                        <button type="button" class="button amm-media-btn" data-target="amm_og_default_image">
+                            <?php Utils::ESC_HTML_E('Select image'); ?>
+                        </button>
+                        <?php if ( $opts->get('og_default_image') ) : ?>
+                            <button type="button" class="button amm-media-remove">
+                                <?php Utils::ESC_HTML_E('Remove'); ?>
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <?php
+    }
+
+    /**
+     * Twitter / X tab.
+     */
+    private function render_tab_twitter( Options $opts ): void {
+        ?>
+        <table class="form-table amm-settings-table">
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Site Handle'); ?></th>
+                <td>
+                    <input type="text" name="twitter_site"
+                           value="<?php echo esc_attr( $opts->get('twitter_site') ); ?>"
+                           class="regular-text"
+                           placeholder="@yoursite">
+                    <p class="description">
+                        <?php Utils::ESC_HTML_E('twitter:site — the @username of the website.'); ?>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Default Card Type'); ?></th>
+                <td>
+                    <select name="twitter_card">
+                        <?php
+                        $card_types = [
+                            'summary'             => 'summary',
+                            'summary_large_image' => 'summary_large_image',
+                            'app'                 => 'app',
+                            'player'              => 'player',
+                        ];
+                        foreach ( $card_types as $val => $label ) {
+                            printf(
+                                '<option value="%s" %s>%s</option>',
+                                esc_attr( $val ),
+                                selected( $opts->get('twitter_card'), $val, false ),
+                                esc_html( $label )
+                            );
+                        }
+                        ?>
+                    </select>
+                    <p class="description">
+                        <?php Utils::ESC_HTML_E('Per-post override is available in the meta box Twitter tab.'); ?>
+                    </p>
+                </td>
+            </tr>
+        </table>
+        <?php
+    }
+
+    /**
+     * JSON-LD tab.
+     */
+    private function render_tab_jsonld( Options $opts ): void {
+        ?>
+        <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('Publisher Entity'); ?></h2>
+        <table class="form-table amm-settings-table">
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Entity Type'); ?></th>
+                <td>
+                    <select name="jsonld_entity_type">
+                        <option value="Organization" <?php selected( $opts->get('jsonld_entity_type'), 'Organization' ); ?>>Organization</option>
+                        <option value="Person"       <?php selected( $opts->get('jsonld_entity_type'), 'Person' ); ?>>Person</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Name'); ?></th>
+                <td>
+                    <input type="text" name="jsonld_entity_name"
+                           value="<?php echo esc_attr( $opts->get('jsonld_entity_name') ); ?>"
+                           class="regular-text">
+                </td>
+            </tr>
+            <tr>
+                <th><?php Utils::ESC_HTML_E('URL'); ?></th>
+                <td>
+                    <input type="url" name="jsonld_entity_url"
+                           value="<?php echo esc_attr( $opts->get('jsonld_entity_url') ); ?>"
+                           class="regular-text"
+                           placeholder="<?php echo esc_attr( home_url() ); ?>">
+                </td>
+            </tr>
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Logo'); ?></th>
+                <td>
+                    <div class="amm-og-image-wrap">
+                        <?php if ( $opts->get('jsonld_entity_logo') ) : ?>
+                            <img src="<?php echo esc_url( $opts->get('jsonld_entity_logo') ); ?>" class="amm-og-preview" alt="">
+                        <?php endif; ?>
+                        <input type="hidden" id="amm_jsonld_entity_logo" name="jsonld_entity_logo"
+                               value="<?php echo esc_attr( $opts->get('jsonld_entity_logo') ); ?>">
+                        <button type="button" class="button amm-media-btn" data-target="amm_jsonld_entity_logo">
+                            <?php Utils::ESC_HTML_E('Select image'); ?>
+                        </button>
+                        <?php if ( $opts->get('jsonld_entity_logo') ) : ?>
+                            <button type="button" class="button amm-media-remove">
+                                <?php Utils::ESC_HTML_E('Remove'); ?>
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('WebSite Schema'); ?></h2>
+        <table class="form-table amm-settings-table">
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Website Name'); ?></th>
+                <td>
+                    <input type="text" name="jsonld_website_name"
+                           value="<?php echo esc_attr( $opts->get('jsonld_website_name') ); ?>"
+                           class="regular-text"
+                           placeholder="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
+                </td>
+            </tr>
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Alternate Name'); ?></th>
+                <td>
+                    <input type="text" name="jsonld_website_alt"
+                           value="<?php echo esc_attr( $opts->get('jsonld_website_alt') ); ?>"
+                           class="regular-text">
+                    <p class="description"><?php Utils::ESC_HTML_E('schema.org alternateName — shown in search results.'); ?></p>
+                </td>
+            </tr>
+        </table>
+        <?php
+    }
+
+    /**
+     * Scripts / Analytics tab.
+     */
+    private function render_tab_scripts( Options $opts ): void {
+        ?>
+        <p class="description" style="margin-bottom:12px">
+            <?php Utils::ESC_HTML_E('Paste full HTML blocks (including &lt;script&gt; tags) or raw JavaScript. Tags are preserved as-is.'); ?>
+        </p>
+        <table class="form-table amm-settings-table">
+            <tr>
+                <th><label for="amm_analytics_head"><?php Utils::ESC_HTML_E('&lt;head&gt; Scripts'); ?></label></th>
+                <td>
+                    <textarea id="amm_analytics_head" name="analytics_head" rows="8"
+                              placeholder="&lt;!-- Google Tag Manager, Meta Pixel, etc --&gt;"
+                    ><?php echo esc_textarea( $opts->get('analytics_head') ); ?></textarea>
+                    <p class="description">
+                        <?php Utils::ESC_HTML_E('Injected inside &lt;head&gt; (before &lt;/head&gt;). Wrap JS in &lt;script&gt; tags.'); ?>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <th><label for="amm_analytics_body"><?php Utils::ESC_HTML_E('&lt;body&gt; Scripts'); ?></label></th>
+                <td>
+                    <textarea id="amm_analytics_body" name="analytics_body" rows="8"
+                              placeholder="&lt;!-- GTM noscript, etc --&gt;"
+                    ><?php echo esc_textarea( $opts->get('analytics_body') ); ?></textarea>
+                    <p class="description">
+                        <?php Utils::ESC_HTML_E('Injected right after &lt;body&gt; open tag (requires theme to call wp_body_open()).'); ?>
+                    </p>
+                </td>
+            </tr>
+        </table>
         <?php
     }
 

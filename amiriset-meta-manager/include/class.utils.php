@@ -25,14 +25,14 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Class <b>Utils</b> -- without description.
  *
- * @version 1.0.0-a.4
+ * @version 1.0.0-a.5
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov
  * @created 2026-05-15 22:14:50
  */
 class Utils {
-    private static string $TEXT_DOMAIN=AMIRISET_META_MANAGER_TEXT_DOMAIN;
+    private static string $TEXT_DOMAIN = AMIRISET_META_MANAGER_TEXT_DOMAIN;
     
     // Superglobals (sanitized) 
 
@@ -63,7 +63,7 @@ class Utils {
         }
         return $_GET[ $key ];
     }
-    
+
     /**
      * Read a string from $_POST.
      * 
@@ -77,7 +77,7 @@ class Utils {
         }
         return  $_POST[ $key ];
     }
-    
+
     /**
      * Read an array from $_POST.
      * 
@@ -91,7 +91,6 @@ class Utils {
         }
         return $_POST[ $key ];
     }
- 
 
     /**
      * Read an absint value from $_GET.
@@ -135,8 +134,20 @@ class Utils {
         return sanitize_key( self::GET($key) );
     }
 
+    // Options helpers
+
+    /**
+     * Load plugin options as a safe property bag.
+     * Merges DB values with defaults — every key is guaranteed to exist.
+     *
+     * @return Options
+     */
+    public static function GET_OPTIONS(): Options {
+        return Options::load();
+    }
+
     // URL helpers
- 
+
     /**
      * Build a URL with query parameters and an optional anchor fragment.
      * Wrapper around add_query_arg() that also handles #fragment,
@@ -154,14 +165,14 @@ class Utils {
         }
         return $url;
     }
-    
+
     // i18n 
 
     /**
      * Echo escaped attribute + translated string (equivalent of esc_attr_e()).
      * 
      * @param string $text Original text.
-     * @return string Translated text.
+     * @return void
      */
     public static function ESC_ATTR_E( string $text ): void {
         esc_attr_e( $text, self::$TEXT_DOMAIN );
@@ -191,7 +202,7 @@ class Utils {
      * Echo escaped-and-translated string (equivalent of esc_html_e()).
      * 
      * @param string $text Original text.
-     * @return string Translated text.
+     * @return void
      */
     public static function ESC_HTML_E( string $text ): void {
         esc_html_e( $text, self::$TEXT_DOMAIN );
