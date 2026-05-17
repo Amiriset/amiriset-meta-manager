@@ -15,45 +15,31 @@
  *   Licensed under GNU GPLv3 or later.                                      *
  *                                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+namespace Amiriset\MetaManager;
+defined( 'ABSPATH' ) || exit;
+
+
 //------------------------------------------------------------------------------
 //    DESCRIPTIONS
 //------------------------------------------------------------------------------
 /**
- * File <b>constants</b> — shared constants.
- *
- * Included by the main plugin file and uninstall.php
- * to guarantee consistent key names across all entry points.
+ * Class <b>class.propertymetatag</b> -- without description.
  *
  * @version 1.0.0-a.5
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov 
- * @created 2026-05-17 01:56:08
+ * @created 2026-05-17 17:27:20
  */
+class PropertyMetaTag extends MetaTag {
 
-defined( 'ABSPATH' ) || exit;
- 
-/**
- * Plugin version.
- */
-define( 'AMIRISET_META_MANAGER_VERSION', '1.0.0-a.5' );
- 
-/**
- * DB key. Single post-meta key → JSON.
- */
-define( 'AMIRISET_META_MANAGER_DB_KEY', '_amm_meta_data' );
- 
-/**
- * Global settings option key.
- */
-define( 'AMIRISET_META_MANAGER_OPTION_KEY', '_amm_options' );
- 
-/**
- * Text Domain.
- */
-define( 'AMIRISET_META_MANAGER_TEXT_DOMAIN', 'amiriset-meta-manager' );
- 
-/**
- * Display Name.
- */
-define( 'AMIRISET_META_MANAGER_DISPLAY_NAME', '🔍 Amiriset Meta Manager' );
+    public function setProperty($value): static {
+        parent::setValue(MetaTag::$PROPERTY, $value);
+        return $this;
+    }
+    
+    public function getProperty() { 
+        return parent::getValue(MetaTag::$PROPERTY);        
+    }
+}

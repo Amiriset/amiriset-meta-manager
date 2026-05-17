@@ -26,7 +26,7 @@ defined( 'ABSPATH' ) || exit;
  * Class <b>Utils</b> -- without description.
  *
  * @version 1.0.0-a.4
- * @package Amiriset
+ * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov
  * @created 2026-05-15 22:14:50
