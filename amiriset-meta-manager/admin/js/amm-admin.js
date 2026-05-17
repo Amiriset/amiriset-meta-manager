@@ -21,7 +21,7 @@
  * File <b>amm-admin.js</b> -- Amiriset Meta Manager — Admin JS. 
  * Dependencies: jQuery, wp.media (enqueued via wp_enqueue_media)
  *
- * @version 1.0.0-a.3
+ * @version 1.0.0-a.4
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov
@@ -226,6 +226,43 @@
         }
     });
 
+    // ── Copy OG → Twitter ─────────────────────────────────────────────────────
+
+    $('#amm-copy-from-og').on('click', function () {
+        var map = {
+            '#amm_og_title':       '#amm_tw_title',
+            '#amm_og_description': '#amm_tw_description',
+            '#amm_og_image':       '#amm_tw_image'
+        };
+
+        $.each(map, function (ogSel, twSel) {
+            var $tw = $(twSel);
+            if (!$tw.val()) {
+                var ogVal = $(ogSel).val();
+                if (ogVal) {
+                    $tw.val(ogVal).trigger('input');
+                }
+            }
+        });
+
+        // Handle image preview for tw_image
+        var twImg = $('#amm_tw_image').val();
+        if (twImg) {
+            var $wrap = $('#amm_tw_image').closest('.amm-og-image-wrap');
+            if (!$wrap.find('.amm-og-preview').length) {
+                $('<img>', { src: twImg, alt: '', class: 'amm-og-preview' }).prependTo($wrap);
+                var i18n = (ammData && ammData.i18n) ? ammData.i18n : {};
+                if (!$wrap.find('.amm-media-remove').length) {
+                    $('<button>', {
+                        type: 'button',
+                        class: 'button amm-media-remove',
+                        text: i18n.removeImage || 'Remove'
+                    }).insertAfter($wrap.find('.amm-media-btn'));
+                }
+            }
+        }
+    });
+
     // ── Utilities ─────────────────────────────────────────────────────────────
 
     function escHtml(str) {
@@ -241,6 +278,3 @@
     }
 
 }(jQuery));
-
-
-

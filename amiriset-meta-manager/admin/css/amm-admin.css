@@ -1,4 +1,3 @@
-
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *        ___             _        _                 _                       *
  *       /   |           |_|      |_|               | |                      *
@@ -349,4 +348,12 @@
 /* Pagination */
 .amm-pagination {
     margin-top: 12px;
+}
+
+/* Copy from OG */
+.amm-copy-og-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
 }

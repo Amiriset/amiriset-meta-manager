@@ -321,6 +321,12 @@ class MetaBox {
                 $opts        = get_option(AMIRISET_META_MANAGER_OPTION_KEY, Activator::defaults() );
                 $tw_site_global = $opts['twitter_site'] ?? '';
                 ?>
+                <p class="amm-copy-og-wrap">
+                    <button type="button" class="button button-secondary" id="amm-copy-from-og">
+                        📋 <?php Utils::ESC_HTML_E('Copy from Open Graph'); ?>
+                    </button>
+                    <span class="description"><?php Utils::ESC_HTML_E('Fill empty Twitter fields from OG values above.'); ?></span>
+                </p>
                 <table class="amm-table">
                     <tr>
                         <th><label for="amm_tw_card"><?php Utils::ESC_HTML_E('Card Type'); ?></label></th>
