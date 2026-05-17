@@ -19,79 +19,78 @@
 namespace Amiriset\MetaManager;
 defined( 'ABSPATH' ) || exit;
 
-
 //------------------------------------------------------------------------------
 //    DESCRIPTIONS
 //------------------------------------------------------------------------------
 /**
- * Class <b>Activator</b> -- activates plugin.
+ * Class <b>Ajax</b> --  WordPress AJAX endpoints for the Amiriset Meta Manager.
+ *
+ * Registered actions (admin-only, logged-in):
+ * amm_generate_keywords  — returns suggested keywords for a post
  *
  * @version 1.0.0-a.5
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov 
- * @created 2026-05-13 22:31:34
+ * @created 2026-05-13 22:50:53
  */
-class Activator {
-    public static function activate(): void {
-        // Write defaults only once
-        if ( false === get_option(AMIRISET_META_MANAGER_OPTION_KEY ) ) {
-            add_option( AMIRISET_META_MANAGER_OPTION_KEY, self::defaults() );
-        }
-        flush_rewrite_rules();
+class Ajax {
+    
+    public function init_hooks(): void {
+        add_action( 'wp_ajax_amm_generate_keywords', [ $this, 'handle_generate_keywords' ] );
     }
 
     /**
-     * Default global settings structure.
-     *
-     * @return array
+     * Generate Keywords
+     * @return void
      */
-    public static function defaults(): array {
-        return [
-            // ── Technical (override-only) ────────────
-            'charset'           => '',
-            'content_language'  => '',
-            'viewport'          => '',
-            'theme_color'       => '',
-            'manifest'          => '',
+    public function handle_generate_keywords(): void {
+        // Security
+        check_ajax_referer( 'amm_ajax_nonce', 'nonce' );
 
-            // ── SEO common ───────────────────────────
-            'distribution'      => 'global',
-            'classification'    => '',
-            'copyright'         => '',
-            'developer'         => '',
-            'default_robots'    => 'index, follow',
-            'title_suffix'      => ' | ' . get_bloginfo( 'name' ),
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            wp_send_json_error( [ 'message' => Utils::LANG('Permission denied.') ], 403 );
+        }
 
-            // ── Open Graph global ────────────────────
-            'og_site_name'      => '',
-            'og_default_image'  => '',
-            'og_default_locale' => '',
-            'og_default_type'   => 'website',
+        $post_id = Utils::POST_INT('post_id', 0 );
+        if ( ! $post_id ) {
+            wp_send_json_error( [ 'message' => Utils::LANG('Invalid post ID.') ], 400 );
+        }
 
-            // ── Twitter global ───────────────────────
-            'twitter_site'      => '',
-            'twitter_card'      => 'summary_large_image',
+        $post = get_post( $post_id );
+        if ( ! $post ) {
+            wp_send_json_error( [ 'message' => Utils::LANG('Post not found.') ], 404 );
+        }
 
-            // ── JSON-LD global ───────────────────────
-            'jsonld_entity_type'  => 'Organization',
-            'jsonld_entity_name'  => '',
-            'jsonld_entity_url'   => '',
-            'jsonld_entity_logo'  => '',
-            'jsonld_website_name' => '',
-            'jsonld_website_alt'  => '',
+        // Respect capability for this specific post
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            wp_send_json_error( [ 'message' => Utils::LANG('Permission denied.') ], 403 );
+        }
 
-            // ── Post types ───────────────────────────
-            'enabled_post_types' => [ 'post', 'page' ],
+        // Read options
+        $opts       = get_option(AMIRISET_META_MANAGER_OPTION_KEY, Activator::defaults() );
+        $minSymbols = absint( $opts['kw_min_symbols'] ?? 4 );
+        $maxWords   = absint( $opts['kw_max_words']   ?? 10 );
 
-            // ── Keywords ─────────────────────────────
-            'kw_min_symbols'    => 4,
-            'kw_max_words'      => 10,
-            'kw_lang'           => 'auto',
+        // Lang: user can override per-request (from the dropdown in the UI)
+        $lang = sanitize_text_field( Utils::POST('lang', ($opts['kw_lang'] ?? 'auto') ));
+        if ( 'auto' === $lang || '' === $lang ) {
+            $lang = Keywords::detectLang( $post->post_content );
+        }
 
-            // ── Scripts / Analytics ──────────────────
-            'analytics_head'    => '',
-            'analytics_body'    => '',
-        ];
+        // Build text from title + content + excerpt
+        $text = implode( ' ', [
+            $post->post_title,
+            wp_strip_all_tags( $post->post_content ),
+            $post->post_excerpt,
+        ] );
+
+        $keywords = Keywords::genKeywordsFiltered( $text, $minSymbols, $maxWords, $lang );
+
+        wp_send_json_success( [
+            'keywords' => $keywords,
+            'lang'     => $lang,
+            'count'    => count( $keywords ),
+        ] );
     }
 }
