@@ -71,6 +71,16 @@ abstract class AttributeContainer {
 	public function toArray(): array {
 		return $this->content;
 	}
+        
+        /**
+	 * Deterministic fingerprint of all attributes.
+	 * Used for diff-merge operations on array-valued collection keys.
+	 *
+	 * @return string MD5 hash.
+	 */
+	public function hash(): string {
+		return md5( json_encode( $this->content, JSON_UNESCAPED_UNICODE ) );
+	}
 	
 	public function toHtml(array $excludeKeys = []) {
 		$str = "";
