@@ -31,7 +31,7 @@
 /* global ammData, wp */
 (function ($) {
     'use strict';
-    
+
     // ── Override checkboxes (Technical tab) ───────────────────────────────────
 
     $(document).on('change', '.amm-override-cb', function () {
@@ -42,7 +42,7 @@
             $field.val('');
         }
     });
-    
+
     // ── Tabs ─────────────────────────────────────────────────────────────────
 
     $(document).on('click', '.amm-tab-link', function () {
@@ -289,3 +289,6 @@
     }
 
 }(jQuery));
+
+
+

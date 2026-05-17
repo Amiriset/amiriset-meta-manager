@@ -38,7 +38,7 @@ defined( 'ABSPATH' ) || exit;
 class TagCollection {
     private array $tags = [];
 
-    // Create / Update 
+    // ── Create / Update ──────────────────────────────────────────────────
 
     /**
      * Set (create or replace) a value by key.
@@ -61,7 +61,7 @@ class TagCollection {
         $this->tags[ $key ][] = $tag;
     }
 
-    // Read 
+    // ── Read ─────────────────────────────────────────────────────────────
 
     /**
      * Get a value by key (single tag, array of tags, or null).
@@ -116,7 +116,7 @@ class TagCollection {
         return $result;
     }
 
-    // Delete 
+    // ── Delete ───────────────────────────────────────────────────────────
 
     /**
      * Remove a single key.
@@ -156,7 +156,7 @@ class TagCollection {
         $this->tags = [];
     }
 
-    // Merge 
+    // ── Merge ────────────────────────────────────────────────────────────
 
     /**
      * Merge another collection into this one.

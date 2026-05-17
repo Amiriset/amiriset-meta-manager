@@ -34,7 +34,7 @@ defined( 'ABSPATH' ) || exit;
  * @created 2026-05-14 11:25:33
  */
 class Frontend {
-    private array $options;
+    private Options $options;
 
     public function __construct() {
         $this->options = Utils::GET_OPTIONS();
@@ -96,7 +96,7 @@ class Frontend {
         }
 
         // robots
-        $robots = $meta['robots'] ?: ( $opts['default_robots'] ?? 'index, follow' );
+        $robots = $meta['robots'] ?: $opts->get( 'default_robots', 'index, follow' );
         if ( $robots ) {
             printf( '<meta name="robots" content="%s">' . "\n", esc_attr( $robots ) );
         }
@@ -110,8 +110,8 @@ class Frontend {
         // Open Graph
         $og_title = $meta['og_title'] ?: ( $meta['title'] ?: get_the_title( $post_id ) );
         $og_desc  = $meta['og_description'] ?: $desc;
-        $og_image = $meta['og_image'] ?: ( $opts['og_default_image'] ?? '' );
-        $og_type  = $meta['og_type'] ?: ( $opts['og_default_type'] ?? 'website' );
+        $og_image = $meta['og_image'] ?: $opts->get( 'og_default_image' );
+        $og_type  = $meta['og_type'] ?: $opts->get( 'og_default_type', 'website' );
 
         printf( '<meta property="og:title" content="%s">' . "\n",       esc_attr( $og_title ) );
         printf( '<meta property="og:type" content="%s">' . "\n",        esc_attr( $og_type ) );
@@ -142,12 +142,11 @@ class Frontend {
             }
         }
         
-        $opts       = $this->options;
-        $tw_card    = $meta['tw_card']        ?: ( $opts['twitter_card']  ?? 'summary' );
+        $tw_card    = $meta['tw_card']        ?: $opts->get( 'twitter_card', 'summary' );
         $tw_title   = $meta['tw_title']       ?: $og_title;
         $tw_desc    = $meta['tw_description'] ?: $og_desc;
         $tw_image   = $meta['tw_image']       ?: $og_image;
-        $tw_site    = $opts['twitter_site']   ?? '';
+        $tw_site    = $opts->get( 'twitter_site' );
         $tw_creator = $meta['tw_creator']     ?? '';
 
         printf( '<meta name="twitter:card" content="%s">' . "\n",  esc_attr( $tw_card ) );
@@ -173,7 +172,7 @@ class Frontend {
      * @return void
      */
     public function output_analytics_head(): void {
-        $script = trim($this->options['analytics_head'] ?? '');
+        $script = trim( $this->options->get( 'analytics_head' ) );
         if ( $script && ! is_admin() ) {
             // Raw HTML/JS – trust is on the admin who saved it
             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -186,7 +185,7 @@ class Frontend {
      * @return void
      */
     public function output_analytics_body(): void {
-        $script = trim($this->options['analytics_body'] ?? '');
+        $script = trim( $this->options->get( 'analytics_body' ) );
         if ( $script && ! is_admin() ) {
             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             echo "\n" . self::maybe_wrap_script( $script ) . "\n";

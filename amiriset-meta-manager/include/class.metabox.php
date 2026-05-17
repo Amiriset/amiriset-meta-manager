@@ -79,7 +79,7 @@ class MetaBox {
      */
     public function register_meta_box(): void {
         $options    = Utils::GET_OPTIONS();
-        $post_types = $options['enabled_post_types'] ?? [ 'post', 'page' ];
+        $post_types = $options->getArray( 'enabled_post_types', [ 'post', 'page' ] );
 
         foreach ( $post_types as $pt ) {
             add_meta_box(
@@ -127,9 +127,9 @@ class MetaBox {
             'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
             'nonce'      => wp_create_nonce( 'amm_ajax_nonce' ),
             'postId'     => get_the_ID(),
-            'minSymbols' => $options['kw_min_symbols'] ?? 4,
-            'maxWords'   => $options['kw_max_words']   ?? 10,
-            'lang'       => $options['kw_lang']        ?? 'auto',
+            'minSymbols' => $options->getInt( 'kw_min_symbols', 4 ),
+            'maxWords'   => $options->getInt( 'kw_max_words', 10 ),
+            'lang'       => $options->get( 'kw_lang', 'auto' ),
             'i18n'       => [
                 'generating'  => Utils::LANG('Generating…'),
                 'addKeyword'  => Utils::LANG('Click a keyword to add it'),
@@ -319,7 +319,7 @@ class MetaBox {
             <div id="amm-tab-twitter" class="amm-tab-content">
                 <?php
                 $opts        = Utils::GET_OPTIONS();
-                $tw_site_global = $opts['twitter_site'] ?? '';
+                $tw_site_global = $opts->get( 'twitter_site' );
                 ?>
                 <p class="amm-copy-og-wrap">
                     <button type="button" class="button button-secondary" id="amm-copy-from-og">

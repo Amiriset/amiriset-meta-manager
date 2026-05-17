@@ -116,58 +116,57 @@ class Admin {
 
         switch ( $tab ) {
             case 'technical':
-                $opts['charset']          = sanitize_text_field( Utils::POST('charset') );
-                $opts['content_language'] = sanitize_text_field( Utils::POST('content_language') );
-                $opts['viewport']         = sanitize_text_field( Utils::POST('viewport') );
-                $opts['theme_color']      = sanitize_hex_color( Utils::POST('theme_color') ) ?: '';
-                $opts['manifest']         = esc_url_raw( Utils::POST('manifest') );
+                $opts->set( 'charset',          sanitize_text_field( Utils::POST('charset') ) );
+                $opts->set( 'content_language',  sanitize_text_field( Utils::POST('content_language') ) );
+                $opts->set( 'viewport',          sanitize_text_field( Utils::POST('viewport') ) );
+                $opts->set( 'theme_color',       sanitize_hex_color( Utils::POST('theme_color') ) ?: '' );
+                $opts->set( 'manifest',          esc_url_raw( Utils::POST('manifest') ) );
                 break;
 
             case 'seo':
-                $opts['distribution']    = sanitize_text_field( Utils::POST('distribution') );
-                $opts['classification']  = sanitize_text_field( Utils::POST('classification') );
-                $opts['copyright']       = sanitize_text_field( Utils::POST('copyright') );
-                $opts['developer']       = sanitize_text_field( Utils::POST('developer') );
-                $opts['default_robots']  = sanitize_text_field( Utils::POST('default_robots') );
-                $opts['title_suffix']    = sanitize_text_field( Utils::POST('title_suffix') );
-                $opts['enabled_post_types'] = array_map(
+                $opts->set( 'distribution',    sanitize_text_field( Utils::POST('distribution') ) );
+                $opts->set( 'classification',  sanitize_text_field( Utils::POST('classification') ) );
+                $opts->set( 'copyright',       sanitize_text_field( Utils::POST('copyright') ) );
+                $opts->set( 'developer',       sanitize_text_field( Utils::POST('developer') ) );
+                $opts->set( 'default_robots',  sanitize_text_field( Utils::POST('default_robots') ) );
+                $opts->set( 'title_suffix',    sanitize_text_field( Utils::POST('title_suffix') ) );
+                $opts->set( 'enabled_post_types', array_map(
                     'sanitize_key',
                     Utils::POST_ARRAY( 'enabled_post_types', [ 'post', 'page' ] )
-                );
-                $opts['kw_min_symbols']  = absint( Utils::POST('kw_min_symbols') ) ?: 4;
-                $opts['kw_max_words']    = absint( Utils::POST('kw_max_words') ) ?: 10;
-                $opts['kw_lang']         = sanitize_key( Utils::POST('kw_lang') );
+                ) );
+                $opts->set( 'kw_min_symbols',  absint( Utils::POST('kw_min_symbols') ) ?: 4 );
+                $opts->set( 'kw_max_words',    absint( Utils::POST('kw_max_words') ) ?: 10 );
+                $opts->set( 'kw_lang',         sanitize_key( Utils::POST('kw_lang') ) );
                 break;
 
             case 'og':
-                $opts['og_site_name']      = sanitize_text_field( Utils::POST('og_site_name') );
-                $opts['og_default_image']  = esc_url_raw( Utils::POST('og_default_image') );
-                $opts['og_default_locale'] = sanitize_text_field( Utils::POST('og_default_locale') );
-                $opts['og_default_type']   = sanitize_text_field( Utils::POST('og_default_type') );
+                $opts->set( 'og_site_name',      sanitize_text_field( Utils::POST('og_site_name') ) );
+                $opts->set( 'og_default_image',  esc_url_raw( Utils::POST('og_default_image') ) );
+                $opts->set( 'og_default_locale', sanitize_text_field( Utils::POST('og_default_locale') ) );
+                $opts->set( 'og_default_type',   sanitize_text_field( Utils::POST('og_default_type') ) );
                 break;
 
             case 'twitter':
-                $opts['twitter_site'] = sanitize_text_field( Utils::POST('twitter_site') );
-                $opts['twitter_card'] = sanitize_text_field( Utils::POST('twitter_card') );
+                $opts->set( 'twitter_site', sanitize_text_field( Utils::POST('twitter_site') ) );
+                $opts->set( 'twitter_card', sanitize_text_field( Utils::POST('twitter_card') ) );
                 break;
 
             case 'jsonld':
-                $opts['jsonld_entity_type']  = sanitize_text_field( Utils::POST('jsonld_entity_type') );
-                $opts['jsonld_entity_name']  = sanitize_text_field( Utils::POST('jsonld_entity_name') );
-                $opts['jsonld_entity_url']   = esc_url_raw( Utils::POST('jsonld_entity_url') );
-                $opts['jsonld_entity_logo']  = esc_url_raw( Utils::POST('jsonld_entity_logo') );
-                $opts['jsonld_website_name'] = sanitize_text_field( Utils::POST('jsonld_website_name') );
-                $opts['jsonld_website_alt']  = sanitize_text_field( Utils::POST('jsonld_website_alt') );
+                $opts->set( 'jsonld_entity_type',  sanitize_text_field( Utils::POST('jsonld_entity_type') ) );
+                $opts->set( 'jsonld_entity_name',  sanitize_text_field( Utils::POST('jsonld_entity_name') ) );
+                $opts->set( 'jsonld_entity_url',   esc_url_raw( Utils::POST('jsonld_entity_url') ) );
+                $opts->set( 'jsonld_entity_logo',  esc_url_raw( Utils::POST('jsonld_entity_logo') ) );
+                $opts->set( 'jsonld_website_name', sanitize_text_field( Utils::POST('jsonld_website_name') ) );
+                $opts->set( 'jsonld_website_alt',  sanitize_text_field( Utils::POST('jsonld_website_alt') ) );
                 break;
 
             case 'scripts':
-                // Admin-only — preserve <script> tags
-                $opts['analytics_head'] = wp_unslash( Utils::POST('analytics_head') );
-                $opts['analytics_body'] = wp_unslash( Utils::POST('analytics_body') );
+                $opts->set( 'analytics_head', wp_unslash( Utils::POST('analytics_head') ) );
+                $opts->set( 'analytics_body', wp_unslash( Utils::POST('analytics_body') ) );
                 break;
         }
 
-        update_option( AMIRISET_META_MANAGER_OPTION_KEY, $opts );
+        $opts->save();
 
         wp_safe_redirect( Utils::ADD_QUERY_ARG_WITH_FRAGMENT(
             admin_url( 'admin.php' ),
@@ -300,7 +299,7 @@ class Admin {
     /**
      * Technical tab — override-only fields.
      */
-    private function render_tab_technical( array $opts ): void {
+    private function render_tab_technical( Options $opts ): void {
         $fields = [
             'charset'          => [ 'Charset',          'e.g. UTF-8 (usually handled by WordPress)' ],
             'content_language' => [ 'Content-Language',  'e.g. en-GB' ],
@@ -311,7 +310,7 @@ class Admin {
         ?>
         <table class="form-table amm-settings-table">
             <?php foreach ( $fields as $key => $info ) :
-                $value    = $opts[ $key ] ?? '';
+                $value    = $opts->get( $key );
                 $has_val  = ( $value !== '' );
                 $field_id = 'amm_' . $key;
                 ?>
@@ -342,9 +341,9 @@ class Admin {
     /**
      * SEO tab — robots, distribution, classification, copyright, post types, keywords.
      */
-    private function render_tab_seo( array $opts ): void {
+    private function render_tab_seo( Options $opts ): void {
         $all_cpts = $this->get_all_public_cpts();
-        $enabled  = $opts['enabled_post_types'] ?? [ 'post', 'page' ];
+        $enabled  = $opts->getArray( 'enabled_post_types', [ 'post', 'page' ] );
         ?>
         <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('SEO Defaults'); ?></h2>
         <table class="form-table amm-settings-table">
@@ -352,7 +351,7 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('Default Robots'); ?></th>
                 <td>
                     <input type="text" name="default_robots"
-                           value="<?php echo esc_attr( $opts['default_robots'] ); ?>"
+                           value="<?php echo esc_attr( $opts->get('default_robots') ); ?>"
                            class="regular-text">
                     <p class="description"><?php Utils::ESC_HTML_E('e.g. index, follow'); ?></p>
                 </td>
@@ -361,7 +360,7 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('Title Suffix'); ?></th>
                 <td>
                     <input type="text" name="title_suffix"
-                           value="<?php echo esc_attr( $opts['title_suffix'] ); ?>"
+                           value="<?php echo esc_attr( $opts->get('title_suffix') ); ?>"
                            class="regular-text">
                     <p class="description"><?php Utils::ESC_HTML_E('Appended to SEO title (e.g. " | My Site").'); ?></p>
                 </td>
@@ -370,7 +369,7 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('Distribution'); ?></th>
                 <td>
                     <input type="text" name="distribution"
-                           value="<?php echo esc_attr( $opts['distribution'] ); ?>"
+                           value="<?php echo esc_attr( $opts->get('distribution') ); ?>"
                            class="regular-text"
                            placeholder="global">
                 </td>
@@ -379,7 +378,7 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('Classification'); ?></th>
                 <td>
                     <input type="text" name="classification"
-                           value="<?php echo esc_attr( $opts['classification'] ); ?>"
+                           value="<?php echo esc_attr( $opts->get('classification') ); ?>"
                            class="regular-text"
                            placeholder="e.g. IT, Education, Business">
                 </td>
@@ -388,7 +387,7 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('Copyright'); ?></th>
                 <td>
                     <input type="text" name="copyright"
-                           value="<?php echo esc_attr( $opts['copyright'] ); ?>"
+                           value="<?php echo esc_attr( $opts->get('copyright') ); ?>"
                            class="regular-text">
                 </td>
             </tr>
@@ -396,7 +395,7 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('Developer'); ?></th>
                 <td>
                     <input type="text" name="developer"
-                           value="<?php echo esc_attr( $opts['developer'] ); ?>"
+                           value="<?php echo esc_attr( $opts->get('developer') ); ?>"
                            class="regular-text">
                 </td>
             </tr>
@@ -428,24 +427,24 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('Min. word length'); ?></th>
                 <td>
                     <input type="number" min="2" max="10" name="kw_min_symbols"
-                           value="<?php echo esc_attr( $opts['kw_min_symbols'] ); ?>">
+                           value="<?php echo esc_attr( $opts->get('kw_min_symbols') ); ?>">
                 </td>
             </tr>
             <tr>
                 <th><?php Utils::ESC_HTML_E('Max. keywords'); ?></th>
                 <td>
                     <input type="number" min="5" max="100" name="kw_max_words"
-                           value="<?php echo esc_attr( $opts['kw_max_words'] ); ?>">
+                           value="<?php echo esc_attr( $opts->get('kw_max_words') ); ?>">
                 </td>
             </tr>
             <tr>
                 <th><?php Utils::ESC_HTML_E('Default language'); ?></th>
                 <td>
                     <select name="kw_lang">
-                        <option value="auto" <?php selected( $opts['kw_lang'], 'auto' ); ?>><?php Utils::ESC_HTML_E('Auto-detect'); ?></option>
-                        <option value="en"   <?php selected( $opts['kw_lang'], 'en' ); ?>>English</option>
-                        <option value="ru"   <?php selected( $opts['kw_lang'], 'ru' ); ?>>Русский</option>
-                        <option value="uk"   <?php selected( $opts['kw_lang'], 'uk' ); ?>>Українська</option>
+                        <option value="auto" <?php selected( $opts->get('kw_lang'), 'auto' ); ?>><?php Utils::ESC_HTML_E('Auto-detect'); ?></option>
+                        <option value="en"   <?php selected( $opts->get('kw_lang'), 'en' ); ?>>English</option>
+                        <option value="ru"   <?php selected( $opts->get('kw_lang'), 'ru' ); ?>>Русский</option>
+                        <option value="uk"   <?php selected( $opts->get('kw_lang'), 'uk' ); ?>>Українська</option>
                     </select>
                 </td>
             </tr>
@@ -456,14 +455,14 @@ class Admin {
     /**
      * Open Graph tab.
      */
-    private function render_tab_og( array $opts ): void {
+    private function render_tab_og( Options $opts ): void {
         ?>
         <table class="form-table amm-settings-table">
             <tr>
                 <th><?php Utils::ESC_HTML_E('Site Name'); ?></th>
                 <td>
                     <input type="text" name="og_site_name"
-                           value="<?php echo esc_attr( $opts['og_site_name'] ); ?>"
+                           value="<?php echo esc_attr( $opts->get('og_site_name') ); ?>"
                            class="regular-text"
                            placeholder="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
                 </td>
@@ -474,7 +473,7 @@ class Admin {
                     <select name="og_default_type">
                         <?php foreach ( [ 'website', 'article', 'product' ] as $t ) : ?>
                             <option value="<?php echo esc_attr( $t ); ?>"
-                                <?php selected( $opts['og_default_type'], $t ); ?>>
+                                <?php selected( $opts->get('og_default_type'), $t ); ?>>
                                 <?php echo esc_html( $t ); ?>
                             </option>
                         <?php endforeach; ?>
@@ -485,7 +484,7 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('Default Locale'); ?></th>
                 <td>
                     <input type="text" name="og_default_locale"
-                           value="<?php echo esc_attr( $opts['og_default_locale'] ); ?>"
+                           value="<?php echo esc_attr( $opts->get('og_default_locale') ); ?>"
                            class="regular-text"
                            placeholder="e.g. en_GB">
                 </td>
@@ -494,15 +493,15 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('Default OG Image'); ?></th>
                 <td>
                     <div class="amm-og-image-wrap">
-                        <?php if ( $opts['og_default_image'] ) : ?>
-                            <img src="<?php echo esc_url( $opts['og_default_image'] ); ?>" class="amm-og-preview" alt="">
+                        <?php if ( $opts->get('og_default_image') ) : ?>
+                            <img src="<?php echo esc_url( $opts->get('og_default_image') ); ?>" class="amm-og-preview" alt="">
                         <?php endif; ?>
                         <input type="hidden" id="amm_og_default_image" name="og_default_image"
-                               value="<?php echo esc_attr( $opts['og_default_image'] ); ?>">
+                               value="<?php echo esc_attr( $opts->get('og_default_image') ); ?>">
                         <button type="button" class="button amm-media-btn" data-target="amm_og_default_image">
                             <?php Utils::ESC_HTML_E('Select image'); ?>
                         </button>
-                        <?php if ( $opts['og_default_image'] ) : ?>
+                        <?php if ( $opts->get('og_default_image') ) : ?>
                             <button type="button" class="button amm-media-remove">
                                 <?php Utils::ESC_HTML_E('Remove'); ?>
                             </button>
@@ -517,14 +516,14 @@ class Admin {
     /**
      * Twitter / X tab.
      */
-    private function render_tab_twitter( array $opts ): void {
+    private function render_tab_twitter( Options $opts ): void {
         ?>
         <table class="form-table amm-settings-table">
             <tr>
                 <th><?php Utils::ESC_HTML_E('Site Handle'); ?></th>
                 <td>
                     <input type="text" name="twitter_site"
-                           value="<?php echo esc_attr( $opts['twitter_site'] ); ?>"
+                           value="<?php echo esc_attr( $opts->get('twitter_site') ); ?>"
                            class="regular-text"
                            placeholder="@yoursite">
                     <p class="description">
@@ -547,7 +546,7 @@ class Admin {
                             printf(
                                 '<option value="%s" %s>%s</option>',
                                 esc_attr( $val ),
-                                selected( $opts['twitter_card'], $val, false ),
+                                selected( $opts->get('twitter_card'), $val, false ),
                                 esc_html( $label )
                             );
                         }
@@ -565,7 +564,7 @@ class Admin {
     /**
      * JSON-LD tab.
      */
-    private function render_tab_jsonld( array $opts ): void {
+    private function render_tab_jsonld( Options $opts ): void {
         ?>
         <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('Publisher Entity'); ?></h2>
         <table class="form-table amm-settings-table">
@@ -573,8 +572,8 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('Entity Type'); ?></th>
                 <td>
                     <select name="jsonld_entity_type">
-                        <option value="Organization" <?php selected( $opts['jsonld_entity_type'], 'Organization' ); ?>>Organization</option>
-                        <option value="Person"       <?php selected( $opts['jsonld_entity_type'], 'Person' ); ?>>Person</option>
+                        <option value="Organization" <?php selected( $opts->get('jsonld_entity_type'), 'Organization' ); ?>>Organization</option>
+                        <option value="Person"       <?php selected( $opts->get('jsonld_entity_type'), 'Person' ); ?>>Person</option>
                     </select>
                 </td>
             </tr>
@@ -582,7 +581,7 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('Name'); ?></th>
                 <td>
                     <input type="text" name="jsonld_entity_name"
-                           value="<?php echo esc_attr( $opts['jsonld_entity_name'] ); ?>"
+                           value="<?php echo esc_attr( $opts->get('jsonld_entity_name') ); ?>"
                            class="regular-text">
                 </td>
             </tr>
@@ -590,7 +589,7 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('URL'); ?></th>
                 <td>
                     <input type="url" name="jsonld_entity_url"
-                           value="<?php echo esc_attr( $opts['jsonld_entity_url'] ); ?>"
+                           value="<?php echo esc_attr( $opts->get('jsonld_entity_url') ); ?>"
                            class="regular-text"
                            placeholder="<?php echo esc_attr( home_url() ); ?>">
                 </td>
@@ -599,15 +598,15 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('Logo'); ?></th>
                 <td>
                     <div class="amm-og-image-wrap">
-                        <?php if ( $opts['jsonld_entity_logo'] ) : ?>
-                            <img src="<?php echo esc_url( $opts['jsonld_entity_logo'] ); ?>" class="amm-og-preview" alt="">
+                        <?php if ( $opts->get('jsonld_entity_logo') ) : ?>
+                            <img src="<?php echo esc_url( $opts->get('jsonld_entity_logo') ); ?>" class="amm-og-preview" alt="">
                         <?php endif; ?>
                         <input type="hidden" id="amm_jsonld_entity_logo" name="jsonld_entity_logo"
-                               value="<?php echo esc_attr( $opts['jsonld_entity_logo'] ); ?>">
+                               value="<?php echo esc_attr( $opts->get('jsonld_entity_logo') ); ?>">
                         <button type="button" class="button amm-media-btn" data-target="amm_jsonld_entity_logo">
                             <?php Utils::ESC_HTML_E('Select image'); ?>
                         </button>
-                        <?php if ( $opts['jsonld_entity_logo'] ) : ?>
+                        <?php if ( $opts->get('jsonld_entity_logo') ) : ?>
                             <button type="button" class="button amm-media-remove">
                                 <?php Utils::ESC_HTML_E('Remove'); ?>
                             </button>
@@ -623,7 +622,7 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('Website Name'); ?></th>
                 <td>
                     <input type="text" name="jsonld_website_name"
-                           value="<?php echo esc_attr( $opts['jsonld_website_name'] ); ?>"
+                           value="<?php echo esc_attr( $opts->get('jsonld_website_name') ); ?>"
                            class="regular-text"
                            placeholder="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
                 </td>
@@ -632,7 +631,7 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('Alternate Name'); ?></th>
                 <td>
                     <input type="text" name="jsonld_website_alt"
-                           value="<?php echo esc_attr( $opts['jsonld_website_alt'] ); ?>"
+                           value="<?php echo esc_attr( $opts->get('jsonld_website_alt') ); ?>"
                            class="regular-text">
                     <p class="description"><?php Utils::ESC_HTML_E('schema.org alternateName — shown in search results.'); ?></p>
                 </td>
@@ -644,7 +643,7 @@ class Admin {
     /**
      * Scripts / Analytics tab.
      */
-    private function render_tab_scripts( array $opts ): void {
+    private function render_tab_scripts( Options $opts ): void {
         ?>
         <p class="description" style="margin-bottom:12px">
             <?php Utils::ESC_HTML_E('Paste full HTML blocks (including &lt;script&gt; tags) or raw JavaScript. Tags are preserved as-is.'); ?>
@@ -655,7 +654,7 @@ class Admin {
                 <td>
                     <textarea id="amm_analytics_head" name="analytics_head" rows="8"
                               placeholder="&lt;!-- Google Tag Manager, Meta Pixel, etc --&gt;"
-                    ><?php echo esc_textarea( $opts['analytics_head'] ); ?></textarea>
+                    ><?php echo esc_textarea( $opts->get('analytics_head') ); ?></textarea>
                     <p class="description">
                         <?php Utils::ESC_HTML_E('Injected inside &lt;head&gt; (before &lt;/head&gt;). Wrap JS in &lt;script&gt; tags.'); ?>
                     </p>
@@ -666,7 +665,7 @@ class Admin {
                 <td>
                     <textarea id="amm_analytics_body" name="analytics_body" rows="8"
                               placeholder="&lt;!-- GTM noscript, etc --&gt;"
-                    ><?php echo esc_textarea( $opts['analytics_body'] ); ?></textarea>
+                    ><?php echo esc_textarea( $opts->get('analytics_body') ); ?></textarea>
                     <p class="description">
                         <?php Utils::ESC_HTML_E('Injected right after &lt;body&gt; open tag (requires theme to call wp_body_open()).'); ?>
                     </p>

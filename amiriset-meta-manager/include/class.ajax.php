@@ -69,11 +69,11 @@ class Ajax {
 
         // Read options
         $opts       = Utils::GET_OPTIONS();
-        $minSymbols = absint( $opts['kw_min_symbols'] ?? 4 );
-        $maxWords   = absint( $opts['kw_max_words']   ?? 10 );
+        $minSymbols = $opts->getInt( 'kw_min_symbols', 4 );
+        $maxWords   = $opts->getInt( 'kw_max_words', 10 );
 
         // Lang: user can override per-request (from the dropdown in the UI)
-        $lang = sanitize_text_field( Utils::POST('lang', ($opts['kw_lang'] ?? 'auto') ));
+        $lang = sanitize_text_field( Utils::POST( 'lang', $opts->get( 'kw_lang', 'auto' ) ) );
         if ( 'auto' === $lang || '' === $lang ) {
             $lang = Keywords::detectLang( $post->post_content );
         }

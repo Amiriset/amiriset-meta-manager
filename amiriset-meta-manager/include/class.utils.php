@@ -63,7 +63,7 @@ class Utils {
         }
         return $_GET[ $key ];
     }
-    
+
     /**
      * Read a string from $_POST.
      * 
@@ -77,7 +77,7 @@ class Utils {
         }
         return  $_POST[ $key ];
     }
-    
+
     /**
      * Read an array from $_POST.
      * 
@@ -91,7 +91,6 @@ class Utils {
         }
         return $_POST[ $key ];
     }
- 
 
     /**
      * Read an absint value from $_GET.
@@ -134,24 +133,21 @@ class Utils {
         }
         return sanitize_key( self::GET($key) );
     }
-    
+
     // Options helpers
 
     /**
-     * Load plugin options merged with defaults.
-     * Ensures every expected key exists even if the DB value
-     * was saved by an older version of the plugin.
+     * Load plugin options as a safe property bag.
+     * Merges DB values with defaults — every key is guaranteed to exist.
      *
-     * @return array Full options array.
+     * @return Options
      */
-    public static function GET_OPTIONS(): array {
-        $stored   = get_option( AMIRISET_META_MANAGER_OPTION_KEY, [] );
-        $defaults = Activator::defaults();
-        return array_merge( $defaults, is_array( $stored ) ? $stored : [] );
+    public static function GET_OPTIONS(): Options {
+        return Options::load();
     }
 
     // URL helpers
- 
+
     /**
      * Build a URL with query parameters and an optional anchor fragment.
      * Wrapper around add_query_arg() that also handles #fragment,
@@ -169,7 +165,7 @@ class Utils {
         }
         return $url;
     }
-    
+
     // i18n 
 
     /**
