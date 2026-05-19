@@ -29,7 +29,7 @@ defined( 'ABSPATH' ) || exit;
  *   – Posts     (list of posts + their meta data)
  *   – CPT       (pick a CPT → list its posts + meta data)
  *
- * @version 1.0.0-a.5
+ * @version 1.0.0-a.4
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov
@@ -161,6 +161,14 @@ class Admin {
                 break;
 
             case 'scripts':
+                if ( ! current_user_can( 'unfiltered_html' ) ) {
+                    wp_safe_redirect( Utils::ADD_QUERY_ARG_WITH_FRAGMENT(
+                        admin_url( 'admin.php' ),
+                        [ 'page' => 'amm-settings', 'tab' => 'scripts', 'amm_denied' => '1' ],
+                        ''
+                    ) );
+                    exit;
+                }
                 $opts->set( 'analytics_head', wp_unslash( Utils::POST('analytics_head') ) );
                 $opts->set( 'analytics_body', wp_unslash( Utils::POST('analytics_body') ) );
                 break;
@@ -644,7 +652,21 @@ class Admin {
      * Scripts / Analytics tab.
      */
     private function render_tab_scripts( Options $opts ): void {
+        $can_edit = current_user_can( 'unfiltered_html' );
         ?>
+
+        <?php if ( isset( $_GET['amm_denied'] ) ) : ?>
+            <div class="notice notice-error is-dismissible">
+                <p><?php Utils::ESC_HTML_E('You do not have permission to save unfiltered scripts.'); ?></p>
+            </div>
+        <?php endif; ?>
+
+        <?php if ( ! $can_edit ) : ?>
+            <div class="notice notice-warning">
+                <p><?php Utils::ESC_HTML_E('Your role does not have the unfiltered_html capability. Script fields are read-only.'); ?></p>
+            </div>
+        <?php endif; ?>
+
         <p class="description" style="margin-bottom:12px">
             <?php Utils::ESC_HTML_E('Paste full HTML blocks (including &lt;script&gt; tags) or raw JavaScript. Tags are preserved as-is.'); ?>
         </p>
@@ -654,6 +676,7 @@ class Admin {
                 <td>
                     <textarea id="amm_analytics_head" name="analytics_head" rows="8"
                               placeholder="&lt;!-- Google Tag Manager, Meta Pixel, etc --&gt;"
+                              <?php disabled( ! $can_edit ); ?>
                     ><?php echo esc_textarea( $opts->get('analytics_head') ); ?></textarea>
                     <p class="description">
                         <?php Utils::ESC_HTML_E('Injected inside &lt;head&gt; (before &lt;/head&gt;). Wrap JS in &lt;script&gt; tags.'); ?>
@@ -665,6 +688,7 @@ class Admin {
                 <td>
                     <textarea id="amm_analytics_body" name="analytics_body" rows="8"
                               placeholder="&lt;!-- GTM noscript, etc --&gt;"
+                              <?php disabled( ! $can_edit ); ?>
                     ><?php echo esc_textarea( $opts->get('analytics_body') ); ?></textarea>
                     <p class="description">
                         <?php Utils::ESC_HTML_E('Injected right after &lt;body&gt; open tag (requires theme to call wp_body_open()).'); ?>
