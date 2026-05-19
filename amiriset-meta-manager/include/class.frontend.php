@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
  *  on the frontend. 
  * Hooked into wp_head (priority 1 — before theme outputs anything)
  *
- * @version 1.0.0-a.4
+ * @version 1.0.0-a.5
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov 
@@ -88,7 +88,7 @@ class Frontend {
 
         // ── Inject defaults for missing tags ─────────────────────────────
 
-        // Read raw values before modifying collection 
+        // ── Read raw values before modifying collection ──────────────────
 
         $wp_title      = get_the_title( $post_id );
         $wp_permalink  = get_permalink( $post_id );
@@ -99,7 +99,7 @@ class Frontend {
         $raw_og_image  = $tm->getContent( 'meta::property::og:image' );
         $raw_tw_title  = $tm->getContent( 'meta::property::twitter:title' );
 
-        // Inject defaults
+        // ── Inject defaults ──────────────────────────────────────────────
 
         // robots
         if ( ! $col->has( 'meta::name::robots' ) ) {

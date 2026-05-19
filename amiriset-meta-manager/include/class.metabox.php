@@ -608,6 +608,7 @@ class MetaBox {
         if ( $col->count() === 0 ) {
             delete_post_meta( $post_id, AMIRISET_META_MANAGER_DB_KEY );
         } else {
+            $tm->setData( '_schema', AMIRISET_META_MANAGER_SCHEMA_VERSION );
             update_post_meta( $post_id, AMIRISET_META_MANAGER_DB_KEY, $tm->toJson() );
         }
     }
