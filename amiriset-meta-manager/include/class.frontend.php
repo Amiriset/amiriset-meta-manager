@@ -96,8 +96,11 @@ class Frontend {
 
         $raw_og_title  = $tm->getContent( 'meta::property::og:title' );
         $raw_og_desc   = $tm->getContent( 'meta::property::og:description' ) ?: $tm->getContent( 'meta::name::description' );
-        $raw_og_image  = $tm->getContent( 'meta::property::og:image' );
         $raw_tw_title  = $tm->getContent( 'meta::property::twitter:title' );
+
+        // Resolve images via centralized fallback chain
+        $og_image = ImageResolver::RESOLVE_OG_IMAGE( $post_id, $tm );
+        $tw_image = ImageResolver::RESOLVE_TWITTER_IMAGE( $post_id, $tm );
 
         // ── Inject defaults ──────────────────────────────────────────────
 
@@ -141,9 +144,8 @@ class Frontend {
                 ( new PropertyMetaTag() )->setProperty( 'og:description' )->setContent( $og_desc ) );
         }
 
-        // og:image
-        $og_image = $raw_og_image ?: $opts->get( 'og_default_image' );
-        if ( $og_image && ! $col->has( 'meta::property::og:image' ) ) {
+        // og:image (resolved: custom → featured → global default)
+        if ( $og_image ) {
             $col->set( 'meta::property::og:image',
                 ( new PropertyMetaTag() )->setProperty( 'og:image' )->setContent( $og_image ) );
         }
@@ -166,10 +168,10 @@ class Frontend {
                 ( new PropertyMetaTag() )->setProperty( 'twitter:description' )->setContent( $og_desc ) );
         }
 
-        // twitter:image fallback from og:image
-        if ( ! $col->has( 'meta::property::twitter:image' ) && $og_image ) {
+        // twitter:image (resolved: custom tw → OG chain)
+        if ( $tw_image ) {
             $col->set( 'meta::property::twitter:image',
-                ( new PropertyMetaTag() )->setProperty( 'twitter:image' )->setContent( $og_image ) );
+                ( new PropertyMetaTag() )->setProperty( 'twitter:image' )->setContent( $tw_image ) );
         }
 
         // twitter:site from global settings
