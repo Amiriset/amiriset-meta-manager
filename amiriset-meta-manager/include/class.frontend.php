@@ -45,6 +45,31 @@ class Frontend {
         add_action( 'wp_head',            [ $this, 'output_analytics_head' ], 99 );
         add_action( 'wp_body_open',       [ $this, 'output_analytics_body' ], 1 );
         add_filter( 'pre_get_document_title', [ $this, 'filter_document_title' ], 10 );
+        add_filter( 'wp_robots',          [ $this, 'filter_wp_robots' ], 99 );
+        add_action( 'wp_head',            [ $this, 'suppress_core_tags' ], 0 );
+    }
+
+    /**
+     * Remove core-generated tags that we replace on singular pages.
+     */
+    public function suppress_core_tags(): void {
+        if ( is_singular() ) {
+            remove_action( 'wp_head', 'rel_canonical' );
+            remove_action( 'wp_head', 'wp_shortlink_wp_head', 10 );
+        }
+    }
+
+    /**
+     * Suppress core robots meta on singular pages — we render our own via TagManager.
+     *
+     * @param array $robots Core robots directives.
+     * @return array Empty on singular (our tag replaces it), unchanged otherwise.
+     */
+    public function filter_wp_robots( array $robots ): array {
+        if ( is_singular() ) {
+            return [];
+        }
+        return $robots;
     }
 
     /**
