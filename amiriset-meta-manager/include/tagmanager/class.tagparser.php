@@ -57,8 +57,12 @@ class TagParser {
                         $this->deserealiseJsonLd($value, $collection);
                         break;
                     
+					case "data":
+                        $this->createData($value, $collection);
+                        break;
+					
                     default:
-                        echo "Unknown entity '$key'\n";
+                        break;
                 }		
             }
         }		
@@ -74,10 +78,10 @@ class TagParser {
                     $this->createMetaName($value, $collection);
                     break;
                 case MetaTag::$HTTP_EQUIV:
-				
+                    $this->createMetaHttpEquiv($value, $collection);
                     break;
                 default:
-                    echo "Unknown META entity 'meta::$key'.\n";
+                    break;
             }
         }
     }
@@ -118,9 +122,9 @@ class TagParser {
                                 ->setProperty("$prefix$key")
                                 ->setContent($value[$i]);
                         }	
-                        $collection->set("meta::property::$prefix:$key", $tags);
+                        $collection->set("meta::property::$prefix$key", $tags);
                     } else {
-                        $collection->set("meta::property::$prefix:$key", (new PropertyMetaTag())
+                        $collection->set("meta::property::$prefix$key", (new PropertyMetaTag())
                             ->setProperty("$prefix$key")
                             ->setContent($value));
                     }
@@ -128,15 +132,15 @@ class TagParser {
         }
     }
 	
-    private function createMetaHttpEquiv($attributes) {
+    private function createMetaHttpEquiv(array $attributes, TagCollection $collection): void {
         foreach($attributes as $key => $value) {
             if (is_array($value)) {
                 $count = count($value);
                 $tags = [];
                 for ($i = 0; $i < $count; $i++) {
                     $tags[] = (new HttpEquivMetaTag())
-                    ->setHttpEquiv($key)
-                    ->setContent($value[$i]);
+                        ->setHttpEquiv($key)
+                        ->setContent($value[$i]);
                 }   
                 $collection->set("meta::http-equiv::$key", $tags);
             } else {
@@ -175,8 +179,7 @@ class TagParser {
         $collection->set('jsonld', $script);
     }
 	
-	private function deserealiseLink(array $attributes, TagCollection $collection): void
-	{
+	private function deserealiseLink(array $attributes, TagCollection $collection): void {
 		$tags = [];
 
 		foreach ($attributes as $item) {
@@ -188,8 +191,7 @@ class TagParser {
 		$collection->set("link", $tags);
 	}
 
-	private function createLink($attributes)
-	{
+	private function createLink(array $attributes): LinkTag {
 		$link = new LinkTag();
 
 		foreach ($attributes as $key => $value) {
@@ -197,5 +199,11 @@ class TagParser {
 		}
 
 		return $link;
+	}
+	
+	private function createData(array $attributes, TagCollection $collection): void {
+		foreach ($attributes as $key => $value) {
+			$collection->set("data::$key", $value);
+		}
 	}
 }

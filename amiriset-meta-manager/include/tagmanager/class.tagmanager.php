@@ -69,6 +69,49 @@ class TagManager {
         $this->parser->parse($json, $this->collection);
     }
     
+    /**
+     * Get content value by collection key.
+     * Reads the content attribute from a MetaTag, or raw value from data:: keys.
+     *
+     * @param string $key  Collection key (e.g. 'meta::property::og:title').
+     * @param string $default Fallback.
+     * @return string
+     */
+    public function getContent( string $key, string $default = '' ): string {
+        $tag = $this->collection->get( $key );
+        if ( $tag === null ) {
+            return $default;
+        }
+        if ( $tag instanceof MetaTag ) {
+            return $tag->getContent() ?? $default;
+        }
+        if ( is_string( $tag ) ) {
+            return $tag;
+        }
+        return $default;
+    }
+
+    /**
+     * Get a data:: value.
+     *
+     * @param string $key  Data key (without 'data::' prefix).
+     * @param mixed  $default Fallback.
+     * @return mixed
+     */
+    public function getData( string $key, mixed $default = '' ): mixed {
+        return $this->collection->get( 'data::' . $key ) ?? $default;
+    }
+
+    /**
+     * Set a data:: value (non-renderable metadata).
+     *
+     * @param string $key   Data key (without 'data::' prefix).
+     * @param mixed  $value Value.
+     */
+    public function setData( string $key, mixed $value ): void {
+        $this->collection->set( 'data::' . $key, $value );
+    }
+
     public function toHtml(): void {
         $this->renderer->toHtml($this->collection);
     }

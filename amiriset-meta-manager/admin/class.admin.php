@@ -773,9 +773,15 @@ class Admin {
             while ( $query->have_posts() ) {
                 $query->the_post();
                 $pid  = get_the_ID();
-                $meta = MetaBox::get_meta( $pid );
+                $tm   = MetaBox::load( $pid );
 
-                $has_meta   = ! empty( $meta['description'] ) || ! empty( $meta['keywords'] ) || ! empty( $meta['og_title'] );
+                $m_desc  = $tm->getContent( 'meta::name::description' );
+                $m_kw    = $tm->getContent( 'meta::name::keywords' );
+                $m_og_t  = $tm->getContent( 'meta::property::og:title' );
+                $m_img   = $tm->getContent( 'meta::property::og:image' );
+                $custom  = MetaBox::extract_custom_meta( $tm );
+
+                $has_meta   = $m_desc || $m_kw || $m_og_t;
                 $row_class  = $has_meta ? 'amm-row-has-meta' : 'amm-row-no-meta';
                 $status     = get_post_status();
 
@@ -785,21 +791,22 @@ class Admin {
                     esc_attr( $status ),
                     esc_html( ucfirst( $status ) )
                 );
-                printf( '<td>%s</td>', esc_html( $meta['title'] ?: '—' ) );
+
+                printf( '<td>%s</td>', esc_html( $m_og_t ?: '—' ) );
                 printf( '<td class="amm-desc-cell">%s</td>',
-                    esc_html( $meta['description'] ? mb_substr( $meta['description'], 0, 80 ) . '…' : '—' )
+                    esc_html( $m_desc ? mb_substr( $m_desc, 0, 80 ) . '…' : '—' )
                 );
                 printf( '<td class="amm-kw-cell">%s</td>',
-                    esc_html( $meta['keywords'] ? mb_substr( $meta['keywords'], 0, 60 ) . '…' : '—' )
+                    esc_html( $m_kw ? mb_substr( $m_kw, 0, 60 ) . '…' : '—' )
                 );
                 printf( '<td>%s</td>',
-                    $meta['og_image']
-                        ? '<img src="' . esc_url( $meta['og_image'] ) . '" class="amm-thumb" alt="">'
+                    $m_img
+                        ? '<img src="' . esc_url( $m_img ) . '" class="amm-thumb" alt="">'
                         : '—'
                 );
                 printf( '<td>%s</td>',
-                    ! empty( $meta['custom_meta'] )
-                        ? '<span class="amm-badge">' . count( $meta['custom_meta'] ) . '</span>'
+                    ! empty( $custom )
+                        ? '<span class="amm-badge">' . count( $custom ) . '</span>'
                         : '—'
                 );
                 printf(

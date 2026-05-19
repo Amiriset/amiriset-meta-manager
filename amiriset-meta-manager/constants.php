@@ -57,3 +57,9 @@ define( 'AMIRISET_META_MANAGER_TEXT_DOMAIN', 'amiriset-meta-manager' );
  * Display Name.
  */
 define( 'AMIRISET_META_MANAGER_DISPLAY_NAME', '🔍 Amiriset Meta Manager' );
+/**
+ * JSON data schema version.
+ * Stored inside each post meta JSON as data::_schema.
+ * Bumped when the data structure changes — enables future migrations.
+ */
+define( 'AMIRISET_META_MANAGER_SCHEMA_VERSION', '1.0.0-a.5' );

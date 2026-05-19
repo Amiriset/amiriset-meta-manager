@@ -36,6 +36,7 @@ class TagRenderer {
     public function getHtml(TagCollection $collection): string {
         $html = "";
         foreach($collection->getAll() as $key => $value) {
+			if (str_starts_with($key, 'data::')) continue;
             if (is_array($value)) {
                 $count = count($value);
                 for ($i = 0; $i < $count; $i++) {
