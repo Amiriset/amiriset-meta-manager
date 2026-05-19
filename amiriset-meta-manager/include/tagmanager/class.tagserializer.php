@@ -33,25 +33,27 @@ defined( 'ABSPATH' ) || exit;
  */
 class TagSerializer {
     public function toArray(TagCollection $collection): array {
-        $result = [];
-        foreach ($collection->getAll() as $key => $value) {
-            $parts = explode('::', $key);
-            $current = &$result;
-            foreach ($parts as $part) {
-                if (!isset($current[$part])) {
-                    $current[$part] = [];
+		$result = [];
+		foreach ($collection->getAll() as $key => $value) {
+			$parts = explode('::', $key);
+			$current = &$result;
+			foreach ($parts as $part) {
+				if (!isset($current[$part])) {
+					$current[$part] = [];
+				}
+				$current = &$current[$part];
+			}
+			$current = $this->serializeValue($key, $value);
 		}
-		$current = &$current[$part];
-            }
-            $current = $this->serializeValue($key, $value);
-	}
-
+		
         return $result;
     }
 	
     private function serializeValue($key, $value) {
-        $result = new stdClass();
-        if ($key === 'jsonld') {
+        $result = new \stdClass();
+        if (str_starts_with($key, 'data::')) {
+            $result = $value;
+        } elseif ($key === 'jsonld') {
             if ($value instanceof ScriptTag) {
                 $inline = $value->getValue(ScriptTag::$INLINE);
                 if ($inline) {
@@ -60,7 +62,7 @@ class TagSerializer {
             }
         } elseif ($key === LinkTag::$TAG_NAME) {
             if (is_array($value)) {
-                $result = [];
+				$result = [];
                 foreach ($value as $tag) {
                     if ($tag instanceof LinkTag) {
                         $result[] = $tag->toArray();
@@ -69,7 +71,7 @@ class TagSerializer {
             }
         } elseif ($key === ScriptTag::$TAG_NAME) {
             if (is_array($value)) {
-                $result = [];
+				$result = [];
                 foreach ($value as $tag) {
                     if ($tag instanceof ScriptTag) {
                         $result[] = $tag->toArray();
@@ -77,11 +79,11 @@ class TagSerializer {
                 }
             }
         } elseif (str_starts_with($key, 'meta::name::') ||
-                str_starts_with($key, 'meta::http-equiv::') || 
-                str_starts_with($key, 'meta::property::')) {
+			str_starts_with($key, 'meta::http-equiv::') || 
+			str_starts_with($key, 'meta::property::')) {
             $result = $this->extractContents($value);
         }
-        return $result;
+		return $result;
     }
 
     private function extractContents($value) {
