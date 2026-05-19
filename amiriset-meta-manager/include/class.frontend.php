@@ -91,7 +91,7 @@ class Frontend {
         // canonical
         if ( ! $col->has( 'link' ) ) {
             $col->append( 'link',
-                ( new LinkTag() )->setValue( 'rel', 'canonical' )->setValue( 'href', $wp_permalink ) );
+                ( new LinkTag() )->setRel( 'canonical' )->setHref( $wp_permalink ) );
         }
 
         // og:title

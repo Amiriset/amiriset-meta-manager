@@ -597,7 +597,7 @@ class MetaBox {
         // Canonical → LinkTag
         $canonical = esc_url_raw( $raw['canonical'] ?? '' );
         if ( $canonical ) {
-            $link = ( new LinkTag() )->setValue( 'rel', 'canonical' )->setValue( 'href', $canonical );
+            $link = ( new LinkTag() )->setRel( 'canonical' )->setHref( $canonical );
             $col->append( 'link', $link );
         }
 
