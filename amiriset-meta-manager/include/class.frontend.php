@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
  *  on the frontend. 
  * Hooked into wp_head (priority 1 — before theme outputs anything)
  *
- * @version 1.0.0-a.5
+ * @version 1.0.0-a.4
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov 
@@ -44,7 +44,6 @@ class Frontend {
         add_action( 'wp_head',            [ $this, 'output_meta_tags'      ], 1 );
         add_action( 'wp_head',            [ $this, 'output_analytics_head' ], 99 );
         add_action( 'wp_body_open',       [ $this, 'output_analytics_body' ], 1 );
-        add_filter( 'pre_get_document_title', [ $this, 'filter_document_title' ], 10 );
         add_filter( 'wp_robots',          [ $this, 'filter_wp_robots' ], 99 );
         add_action( 'wp_head',            [ $this, 'suppress_core_tags' ], 0 );
     }
@@ -73,18 +72,6 @@ class Frontend {
     }
 
     /**
-     * Override <title> with og:title if set.
-     */
-    public function filter_document_title( string $title ): string {
-        if ( ! is_singular() ) {
-            return $title;
-        }
-        $tm = MetaBox::load( get_the_ID() );
-        $og_title = $tm->getContent( 'meta::property::og:title' );
-        return $og_title ?: $title;
-    }
-
-    /**
      * Output all meta tags via TagManager.
      * Loads per-post data, injects global defaults, renders via TagRenderer.
      */
@@ -101,8 +88,18 @@ class Frontend {
 
         // ── Inject defaults for missing tags ─────────────────────────────
 
-        $wp_title     = get_the_title( $post_id );
-        $wp_permalink = get_permalink( $post_id );
+        // Read raw values before modifying collection 
+
+        $wp_title      = get_the_title( $post_id );
+        $wp_permalink  = get_permalink( $post_id );
+        $title_suffix  = $opts->get( 'title_suffix' );
+
+        $raw_og_title  = $tm->getContent( 'meta::property::og:title' );
+        $raw_og_desc   = $tm->getContent( 'meta::property::og:description' ) ?: $tm->getContent( 'meta::name::description' );
+        $raw_og_image  = $tm->getContent( 'meta::property::og:image' );
+        $raw_tw_title  = $tm->getContent( 'meta::property::twitter:title' );
+
+        // Inject defaults
 
         // robots
         if ( ! $col->has( 'meta::name::robots' ) ) {
@@ -119,12 +116,10 @@ class Frontend {
                 ( new LinkTag() )->setRel( 'canonical' )->setHref( $wp_permalink ) );
         }
 
-        // og:title
-        $og_title = $tm->getContent( 'meta::property::og:title' ) ?: $wp_title;
-        if ( ! $col->has( 'meta::property::og:title' ) ) {
-            $col->set( 'meta::property::og:title',
-                ( new PropertyMetaTag() )->setProperty( 'og:title' )->setContent( $og_title ) );
-        }
+        // og:title + title suffix
+        $og_title = ( $raw_og_title ?: $wp_title ) . $title_suffix;
+        $col->set( 'meta::property::og:title',
+            ( new PropertyMetaTag() )->setProperty( 'og:title' )->setContent( $og_title ) );
 
         // og:type
         if ( ! $col->has( 'meta::property::og:type' ) ) {
@@ -139,16 +134,15 @@ class Frontend {
                 ( new PropertyMetaTag() )->setProperty( 'og:url' )->setContent( $wp_permalink ) );
         }
 
-        // og:description fallback from meta description
-        $og_desc = $tm->getContent( 'meta::property::og:description' )
-                ?: $tm->getContent( 'meta::name::description' );
+        // og:description
+        $og_desc = $raw_og_desc;
         if ( $og_desc && ! $col->has( 'meta::property::og:description' ) ) {
             $col->set( 'meta::property::og:description',
                 ( new PropertyMetaTag() )->setProperty( 'og:description' )->setContent( $og_desc ) );
         }
 
-        // og:image fallback from global default
-        $og_image = $tm->getContent( 'meta::property::og:image' ) ?: $opts->get( 'og_default_image' );
+        // og:image
+        $og_image = $raw_og_image ?: $opts->get( 'og_default_image' );
         if ( $og_image && ! $col->has( 'meta::property::og:image' ) ) {
             $col->set( 'meta::property::og:image',
                 ( new PropertyMetaTag() )->setProperty( 'og:image' )->setContent( $og_image ) );
@@ -161,11 +155,10 @@ class Frontend {
                     ->setContent( $opts->get( 'twitter_card', 'summary' ) ) );
         }
 
-        // twitter:title fallback from og:title
-        if ( ! $col->has( 'meta::property::twitter:title' ) ) {
-            $col->set( 'meta::property::twitter:title',
-                ( new PropertyMetaTag() )->setProperty( 'twitter:title' )->setContent( $og_title ) );
-        }
+        // twitter:title + title suffix (fallback from raw og:title, not suffixed)
+        $tw_title = ( $raw_tw_title ?: $raw_og_title ?: $wp_title ) . $title_suffix;
+        $col->set( 'meta::property::twitter:title',
+            ( new PropertyMetaTag() )->setProperty( 'twitter:title' )->setContent( $tw_title ) );
 
         // twitter:description fallback from og:description
         if ( ! $col->has( 'meta::property::twitter:description' ) && $og_desc ) {

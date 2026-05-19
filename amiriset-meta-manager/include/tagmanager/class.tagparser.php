@@ -53,11 +53,11 @@ class TagParser {
                         $this->deserealiseLink($value, $collection);
                         break;
 						
-                    case "jsonld":
+					case "jsonld":
                         $this->deserealiseJsonLd($value, $collection);
                         break;
                     
-                    case "data":
+					case "data":
                         $this->createData($value, $collection);
                         break;
 					

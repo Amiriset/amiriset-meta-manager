@@ -49,11 +49,11 @@ class TagSerializer {
         return $result;
     }
 	
-    private function serializeValue($key, $value) {
-        $result = new \stdClass();
-        if (str_starts_with($key, 'data::')) {
-            $result = $value;
-        } elseif ($key === 'jsonld') {
+	private function serializeValue($key, $value) {
+		$result = new \stdClass();
+		if (str_starts_with($key, 'data::')) {
+			$result = $value;
+		} elseif ($key === 'jsonld') {
             if ($value instanceof ScriptTag) {
                 $inline = $value->getValue(ScriptTag::$INLINE);
                 if ($inline) {
@@ -84,7 +84,7 @@ class TagSerializer {
             $result = $this->extractContents($value);
         }
 		return $result;
-    }
+	}
 
     private function extractContents($value) {
         if (is_array($value)) {
