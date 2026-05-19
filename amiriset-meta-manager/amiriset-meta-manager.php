@@ -54,6 +54,7 @@ $plugin_files = [
     'include/class.activator.php',
     'include/class.deactivator.php',
     'include/class.keywords.php',
+    'include/class.imageresolver.php',
 
     // TagManager — object model (dependency order)
     'include/tagmanager/class.attributecontainer.php',
