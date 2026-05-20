@@ -51,6 +51,7 @@ class OpenGraphBuilder {
     private string $wp_published_time;
     private string $wp_modified_time;
     private string $wp_author;
+    private string $wp_primary_category;
 
     // Raw per-post values — read before any modification
     private string $raw_og_title;
@@ -97,6 +98,46 @@ class OpenGraphBuilder {
 
         $post = get_post( $this->post_id );
         $this->wp_author = $post ? get_the_author_meta( 'display_name', $post->post_author ) : '';
+
+        $this->wp_primary_category = $this->resolve_primary_category();
+    }
+
+    /**
+     * Resolve primary category name. 
+     *
+     * Priority:
+     *   1. Yoast primary category (_yoast_wpseo_primary_category)
+     *   2. Rank Math primary category (rank_math_primary_category)
+     *   3. First assigned category
+     *
+     * @return string Category name or empty string.
+     */
+    private function resolve_primary_category(): string {
+        // 1. Yoast SEO primary category
+        $primary_id = (int) get_post_meta( $this->post_id, '_yoast_wpseo_primary_category', true );
+        if ( $primary_id > 0 ) {
+            $term = get_term( $primary_id, 'category' );
+            if ( $term && ! is_wp_error( $term ) ) {
+                return $term->name;
+            }
+        }
+
+        // 2. Rank Math primary category
+        $primary_id = (int) get_post_meta( $this->post_id, 'rank_math_primary_category', true );
+        if ( $primary_id > 0 ) {
+            $term = get_term( $primary_id, 'category' );
+            if ( $term && ! is_wp_error( $term ) ) {
+                return $term->name;
+            }
+        }
+
+        // 3. First assigned category
+        $categories = get_the_category( $this->post_id );
+        if ( $categories && ! is_wp_error( $categories ) ) {
+            return $categories[0]->name;
+        }
+
+        return '';
     }
 
     /**
@@ -248,6 +289,11 @@ class OpenGraphBuilder {
         // article:author
         if ( ! $this->col->has( 'meta::property::article:author' ) && $this->wp_author ) {
             $this->set_property( 'article:author', $this->wp_author );
+        }
+
+        // article:section — primary category
+        if ( ! $this->col->has( 'meta::property::article:section' ) && $this->wp_primary_category ) {
+            $this->set_property( 'article:section', $this->wp_primary_category );
         }
 
         // article:tag — from WP post tags
