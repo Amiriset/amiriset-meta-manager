@@ -73,7 +73,7 @@ class Frontend {
 
     /**
      * Output all meta tags via TagManager.
-     * Loads per-post data, injects global defaults, renders via TagRenderer.
+     * Loads per-post data, builds full tag set via OpenGraphBuilder, renders.
      */
     public function output_meta_tags(): void {
         if ( ! is_singular() ) {
@@ -83,117 +83,11 @@ class Frontend {
         global $post;
         $post_id = (int) $post->ID;
         $tm      = MetaBox::load( $post_id );
-        $col     = $tm->getCollection();
-        $opts    = $this->options;
 
-        // ── Inject defaults for missing tags ─────────────────────────────
+        // Build deterministic meta tag set
+        ( new OpenGraphBuilder() )->build( $post_id, $tm, $this->options );
 
-        // ── Read raw values before modifying collection ──────────────────
-
-        $wp_title      = get_the_title( $post_id );
-        $wp_permalink  = get_permalink( $post_id );
-        $title_suffix  = $opts->get( 'title_suffix' );
-
-        $raw_og_title  = $tm->getContent( 'meta::property::og:title' );
-        $raw_og_desc   = $tm->getContent( 'meta::property::og:description' ) ?: $tm->getContent( 'meta::name::description' );
-        $raw_tw_title  = $tm->getContent( 'meta::property::twitter:title' );
-
-        // Resolve images via centralized fallback chain
-        $og_image = ImageResolver::RESOLVE_OG_IMAGE( $post_id, $tm );
-        $tw_image = ImageResolver::RESOLVE_TWITTER_IMAGE( $post_id, $tm );
-
-        // ── Inject defaults ──────────────────────────────────────────────
-
-        // robots
-        if ( ! $col->has( 'meta::name::robots' ) ) {
-            $robots = $opts->get( 'default_robots', 'index, follow' );
-            if ( $robots ) {
-                $col->set( 'meta::name::robots',
-                    ( new NameMetaTag() )->setName( 'robots' )->setContent( $robots ) );
-            }
-        }
-
-        // canonical
-        if ( ! $col->has( 'link' ) ) {
-            $col->append( 'link',
-                ( new LinkTag() )->setRel( 'canonical' )->setHref( $wp_permalink ) );
-        }
-
-        // og:title + title suffix
-        $og_title = ( $raw_og_title ?: $wp_title ) . $title_suffix;
-        $col->set( 'meta::property::og:title',
-            ( new PropertyMetaTag() )->setProperty( 'og:title' )->setContent( $og_title ) );
-
-        // og:type
-        if ( ! $col->has( 'meta::property::og:type' ) ) {
-            $col->set( 'meta::property::og:type',
-                ( new PropertyMetaTag() )->setProperty( 'og:type' )
-                    ->setContent( $opts->get( 'og_default_type', 'website' ) ) );
-        }
-
-        // og:url
-        if ( ! $col->has( 'meta::property::og:url' ) ) {
-            $col->set( 'meta::property::og:url',
-                ( new PropertyMetaTag() )->setProperty( 'og:url' )->setContent( $wp_permalink ) );
-        }
-
-        // og:description
-        $og_desc = $raw_og_desc;
-        if ( $og_desc && ! $col->has( 'meta::property::og:description' ) ) {
-            $col->set( 'meta::property::og:description',
-                ( new PropertyMetaTag() )->setProperty( 'og:description' )->setContent( $og_desc ) );
-        }
-
-        // og:image (resolved: custom → featured → global default)
-        if ( $og_image ) {
-            $col->set( 'meta::property::og:image',
-                ( new PropertyMetaTag() )->setProperty( 'og:image' )->setContent( $og_image ) );
-        }
-
-        // twitter:card
-        if ( ! $col->has( 'meta::property::twitter:card' ) ) {
-            $col->set( 'meta::property::twitter:card',
-                ( new PropertyMetaTag() )->setProperty( 'twitter:card' )
-                    ->setContent( $opts->get( 'twitter_card', 'summary' ) ) );
-        }
-
-        // twitter:title + title suffix (fallback from raw og:title, not suffixed)
-        $tw_title = ( $raw_tw_title ?: $raw_og_title ?: $wp_title ) . $title_suffix;
-        $col->set( 'meta::property::twitter:title',
-            ( new PropertyMetaTag() )->setProperty( 'twitter:title' )->setContent( $tw_title ) );
-
-        // twitter:description fallback from og:description
-        if ( ! $col->has( 'meta::property::twitter:description' ) && $og_desc ) {
-            $col->set( 'meta::property::twitter:description',
-                ( new PropertyMetaTag() )->setProperty( 'twitter:description' )->setContent( $og_desc ) );
-        }
-
-        // twitter:image (resolved: custom tw → OG chain)
-        if ( $tw_image ) {
-            $col->set( 'meta::property::twitter:image',
-                ( new PropertyMetaTag() )->setProperty( 'twitter:image' )->setContent( $tw_image ) );
-        }
-
-        // twitter:site from global settings
-        $tw_site = $opts->get( 'twitter_site' );
-        if ( $tw_site && ! $col->has( 'meta::property::twitter:site' ) ) {
-            $col->set( 'meta::property::twitter:site',
-                ( new PropertyMetaTag() )->setProperty( 'twitter:site' )
-                    ->setContent( '@' . ltrim( $tw_site, '@' ) ) );
-        }
-
-        // twitter:creator — add @ prefix if stored without it
-        if ( $col->has( 'meta::property::twitter:creator' ) ) {
-            $creator = $tm->getContent( 'meta::property::twitter:creator' );
-            if ( $creator && ! str_starts_with( $creator, '@' ) ) {
-                $col->set( 'meta::property::twitter:creator',
-                    ( new PropertyMetaTag() )->setProperty( 'twitter:creator' )
-                        ->setContent( '@' . $creator ) );
-            }
-        }
-
-        // ── Render ───────────────────────────────────────────────────────
-
+        // Render
         echo "\n<!-- Amiriset Meta Manager -->\n";
         $tm->toHtml();
         echo "<!-- /Amiriset Meta Manager -->\n\n";

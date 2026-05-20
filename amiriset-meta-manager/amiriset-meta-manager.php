@@ -55,6 +55,7 @@ $plugin_files = [
     'include/class.deactivator.php',
     'include/class.keywords.php',
     'include/class.imageresolver.php',
+    'include/class.opengraphbuilder.php',
 
     // TagManager — object model (dependency order)
     'include/tagmanager/class.attributecontainer.php',
