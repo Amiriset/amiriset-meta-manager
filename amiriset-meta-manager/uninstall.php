@@ -41,4 +41,5 @@ $wpdb->delete( $wpdb->postmeta, [ 'meta_key' => AMIRISET_META_MANAGER_DB_KEY ] )
 
 // Remove global settings
 delete_option( AMIRISET_META_MANAGER_OPTION_KEY );
+delete_option( AMIRISET_META_MANAGER_SCHEMA_OPTION_KEY );
 delete_option( 'amm_options' ); // legacy key

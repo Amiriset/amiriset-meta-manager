@@ -56,6 +56,8 @@ $plugin_files = [
     'include/class.keywords.php',
     'include/class.imageresolver.php',
     'include/class.opengraphbuilder.php',
+    'include/interface.migration.php',
+    'include/class.metadatamigrator.php',
 
     // TagManager — object model (dependency order)
     'include/tagmanager/class.attributecontainer.php',

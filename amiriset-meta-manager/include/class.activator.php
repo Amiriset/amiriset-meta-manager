@@ -44,6 +44,7 @@ class Activator {
         if ( false === get_option( AMIRISET_META_MANAGER_OPTION_KEY ) ) {
             // Fresh install
             add_option( AMIRISET_META_MANAGER_OPTION_KEY, self::defaults() );
+            update_option( AMIRISET_META_MANAGER_SCHEMA_OPTION_KEY, AMIRISET_META_MANAGER_SCHEMA_VERSION, true );
         } else {
             // Existing install — migrate old field keys if present
             self::migrate_options();
