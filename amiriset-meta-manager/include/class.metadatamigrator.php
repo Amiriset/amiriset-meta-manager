@@ -40,9 +40,6 @@ defined( 'ABSPATH' ) || exit;
  */
 class MetadataMigrator {
 
-    /** Option key for tracking last-known schema version on this install. */
-    private const OPTION_SCHEMA_STATE = AMIRISET_META_MANAGER_SCHEMA_OPTION_KEY;
-
     /** @var MigrationInterface[]|null Cached migrations, sorted by version. */
     private static ?array $migrations = null;
 
@@ -157,7 +154,7 @@ class MetadataMigrator {
      * Stores state in options for notice rendering.
      */
     public static function check_schema_state(): void {
-        $installed = get_option( self::OPTION_SCHEMA_STATE, '' );
+        $installed = get_option( AMIRISET_META_MANAGER_SCHEMA_OPTION_KEY, '' );
         $current   = AMIRISET_META_MANAGER_SCHEMA_VERSION;
 
         if ( $installed === $current ) {
@@ -166,7 +163,7 @@ class MetadataMigrator {
 
         // First install or just updated — if no posts with old data, stamp and skip
         if ( '' === $installed ) {
-            update_option( self::OPTION_SCHEMA_STATE, $current, true );
+            update_option( AMIRISET_META_MANAGER_SCHEMA_OPTION_KEY, $current, true );
             return;
         }
 
@@ -182,7 +179,7 @@ class MetadataMigrator {
             return;
         }
 
-        $installed = get_option( self::OPTION_SCHEMA_STATE, '' );
+        $installed = get_option( AMIRISET_META_MANAGER_SCHEMA_OPTION_KEY, '' );
         $current   = AMIRISET_META_MANAGER_SCHEMA_VERSION;
 
         if ( $installed === $current || '' === $installed ) {
@@ -204,7 +201,7 @@ class MetadataMigrator {
         }
 
         if ( empty( $pending ) ) {
-            update_option( self::OPTION_SCHEMA_STATE, $current, true );
+            update_option( AMIRISET_META_MANAGER_SCHEMA_OPTION_KEY, $current, true );
             return;
         }
 
@@ -250,7 +247,7 @@ class MetadataMigrator {
 
         check_admin_referer( 'amm_run_migration' );
 
-        update_option( self::OPTION_SCHEMA_STATE, AMIRISET_META_MANAGER_SCHEMA_VERSION, true );
+        update_option( AMIRISET_META_MANAGER_SCHEMA_OPTION_KEY, AMIRISET_META_MANAGER_SCHEMA_VERSION, true );
 
         wp_safe_redirect( admin_url( 'admin.php?page=amm-settings&amm_migrated=1' ) );
         exit;

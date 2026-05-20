@@ -50,13 +50,14 @@ define( 'AMIRISET_META_MANAGER_BASENAME', plugin_basename( __FILE__ ) );
 // Load classes
 $plugin_files = [
     'include/class.utils.php',
+    'include/class.debuglog.php',
     'include/class.options.php',
     'include/class.activator.php',
     'include/class.deactivator.php',
     'include/class.keywords.php',
     'include/class.imageresolver.php',
     'include/class.opengraphbuilder.php',
-    'include/interface.migration.php',
+    'include/interface.migrationinterface.php',
     'include/class.metadatamigrator.php',
 
     // TagManager — object model (dependency order)
