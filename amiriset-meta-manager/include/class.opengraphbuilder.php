@@ -48,6 +48,10 @@ class OpenGraphBuilder {
     // WordPress data — resolved once
     private string $wp_title;
     private string $wp_permalink;
+    private string $wp_published_time;
+    private string $wp_modified_time;
+    private string $wp_author;
+    private string $wp_primary_category;
 
     // Raw per-post values — read before any modification
     private string $raw_og_title;
@@ -87,8 +91,53 @@ class OpenGraphBuilder {
     // ── WordPress data ───────────────────────────────────────────────────
 
     private function resolve_wp_data(): void {
-        $this->wp_title     = get_the_title( $this->post_id );
-        $this->wp_permalink = get_permalink( $this->post_id );
+        $this->wp_title          = get_the_title( $this->post_id );
+        $this->wp_permalink      = get_permalink( $this->post_id );
+        $this->wp_published_time = get_post_time( 'c', false, $this->post_id ) ?: '';
+        $this->wp_modified_time  = get_post_modified_time( 'c', false, $this->post_id ) ?: '';
+
+        $post = get_post( $this->post_id );
+        $this->wp_author = $post ? get_the_author_meta( 'display_name', $post->post_author ) : '';
+
+        $this->wp_primary_category = $this->resolve_primary_category();
+    }
+
+    /**
+     * Resolve primary category name. 
+     *
+     * Priority:
+     *   1. Yoast primary category (_yoast_wpseo_primary_category)
+     *   2. Rank Math primary category (rank_math_primary_category)
+     *   3. First assigned category
+     *
+     * @return string Category name or empty string.
+     */
+    private function resolve_primary_category(): string {
+        // 1. Yoast SEO primary category
+        $primary_id = (int) get_post_meta( $this->post_id, '_yoast_wpseo_primary_category', true );
+        if ( $primary_id > 0 ) {
+            $term = get_term( $primary_id, 'category' );
+            if ( $term && ! is_wp_error( $term ) ) {
+                return $term->name;
+            }
+        }
+
+        // 2. Rank Math primary category
+        $primary_id = (int) get_post_meta( $this->post_id, 'rank_math_primary_category', true );
+        if ( $primary_id > 0 ) {
+            $term = get_term( $primary_id, 'category' );
+            if ( $term && ! is_wp_error( $term ) ) {
+                return $term->name;
+            }
+        }
+
+        // 3. First assigned category
+        $categories = get_the_category( $this->post_id );
+        if ( $categories && ! is_wp_error( $categories ) ) {
+            return $categories[0]->name;
+        }
+
+        return '';
     }
 
     /**
@@ -210,12 +259,58 @@ class OpenGraphBuilder {
         }
     }
 
-    // ── Article meta (future expansion) ──────────────────────────────────
+    // ── Article meta ─────────────────────────────────────────────────────
 
+    /**
+     * Inject article meta tags.
+     * Only applies when resolved og:type is 'article'.
+     */
     private function inject_article(): void {
-        // Placeholder for future tasks:
-        // article:published_time, article:modified_time,
-        // article:author, article:section, article:tag
+        // Only for og:type = article
+        $og_type = $this->tm->getContent( 'meta::property::og:type' );
+        if ( 'article' !== $og_type ) {
+            // Check if we just set it in the collection
+            $tag = $this->col->get( 'meta::property::og:type' );
+            if ( ! $tag instanceof PropertyMetaTag || 'article' !== $tag->getContent() ) {
+                return;
+            }
+        }
+
+        // article:published_time — ISO8601
+        if ( ! $this->col->has( 'meta::property::article:published_time' ) && $this->wp_published_time ) {
+            $this->set_property( 'article:published_time', $this->wp_published_time );
+        }
+
+        // article:modified_time — ISO8601
+        if ( ! $this->col->has( 'meta::property::article:modified_time' ) && $this->wp_modified_time ) {
+            $this->set_property( 'article:modified_time', $this->wp_modified_time );
+        }
+
+        // article:author
+        if ( ! $this->col->has( 'meta::property::article:author' ) && $this->wp_author ) {
+            $this->set_property( 'article:author', $this->wp_author );
+        }
+
+        // article:section — primary category
+        if ( ! $this->col->has( 'meta::property::article:section' ) && $this->wp_primary_category ) {
+            $this->set_property( 'article:section', $this->wp_primary_category );
+        }
+
+        // article:tag — from WP post tags
+        if ( ! $this->col->has( 'meta::property::article:tag' ) ) {
+            $tags = get_the_tags( $this->post_id );
+            if ( $tags && ! is_wp_error( $tags ) ) {
+                $tag_objects = [];
+                foreach ( $tags as $tag ) {
+                    $tag_objects[] = ( new PropertyMetaTag() )
+                        ->setProperty( 'article:tag' )
+                        ->setContent( $tag->name );
+                }
+                if ( ! empty( $tag_objects ) ) {
+                    $this->col->set( 'meta::property::article:tag', $tag_objects );
+                }
+            }
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────
