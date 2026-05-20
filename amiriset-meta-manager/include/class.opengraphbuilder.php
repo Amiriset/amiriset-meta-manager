@@ -227,6 +227,14 @@ class OpenGraphBuilder {
             }
         }
 
+        // article:published_time — ISO8601
+        if ( ! $this->col->has( 'meta::property::article:published_time' ) ) {
+            $published = get_post_time( 'c', false, $this->post_id );
+            if ( $published ) {
+                $this->set_property( 'article:published_time', $published );
+            }
+        }
+
         // article:tag — from WP post tags
         if ( ! $this->col->has( 'meta::property::article:tag' ) ) {
             $tags = get_the_tags( $this->post_id );
