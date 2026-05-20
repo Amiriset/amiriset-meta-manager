@@ -235,6 +235,14 @@ class OpenGraphBuilder {
             }
         }
 
+        // article:modified_time — ISO8601
+        if ( ! $this->col->has( 'meta::property::article:modified_time' ) ) {
+            $modified = get_post_modified_time( 'c', false, $this->post_id );
+            if ( $modified ) {
+                $this->set_property( 'article:modified_time', $modified );
+            }
+        }
+
         // article:tag — from WP post tags
         if ( ! $this->col->has( 'meta::property::article:tag' ) ) {
             $tags = get_the_tags( $this->post_id );
