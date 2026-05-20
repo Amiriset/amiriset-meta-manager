@@ -132,12 +132,9 @@ class OpenGraphBuilder {
         $this->og_title = ( $this->raw_og_title ?: $this->wp_title ) . $suffix;
         $this->set_property( 'og:title', $this->og_title );
 
-        // og:type
+        // og:type (manual override wins → attachment mime → type map → _default)
         if ( ! $this->col->has( 'meta::property::og:type' ) ) {
-            $type = ( get_post_type( $this->post_id ) === 'page' )
-                ? 'website'
-                : $this->opts->get( 'og_default_type', 'website' );
-            $this->set_property( 'og:type', $type );
+            $this->set_property( 'og:type', $this->resolve_og_type() );
         }
 
         // og:url
@@ -222,6 +219,52 @@ class OpenGraphBuilder {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────
+
+    /**
+     * Resolve og:type for the current post.
+     *
+     * Priority:
+     *   1. Attachment → resolved from MIME type
+     *   2. og_type_map[post_type] from settings
+     *   3. og_type_map[_default] fallback
+     *
+     * @return string OG type value.
+     */
+    private function resolve_og_type(): string {
+        $post_type = get_post_type( $this->post_id );
+
+        // Attachments: resolve from MIME type
+        if ( 'attachment' === $post_type ) {
+            return $this->resolve_attachment_og_type();
+        }
+
+        // Type map from settings
+        $type_map = $this->opts->getArray( 'og_type_map', [
+            'post' => 'article', 'page' => 'website', '_default' => 'article',
+        ] );
+
+        return $type_map[ $post_type ] ?? $type_map['_default'] ?? 'article';
+    }
+
+    /**
+     * Resolve og:type for an attachment based on MIME type.
+     *
+     * @return string OG type value.
+     */
+    private function resolve_attachment_og_type(): string {
+        $mime = get_post_mime_type( $this->post_id );
+        if ( ! $mime ) {
+            return 'website';
+        }
+
+        $major = explode( '/', $mime )[0];
+
+        return match ( $major ) {
+            'video' => 'video.other',
+            'audio' => 'music.song',
+            default => 'website',
+        };
+    }
 
     private function set_property( string $property, string $content ): void {
         $this->col->set(
