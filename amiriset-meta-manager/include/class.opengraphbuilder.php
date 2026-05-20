@@ -210,12 +210,38 @@ class OpenGraphBuilder {
         }
     }
 
-    // ── Article meta (future expansion) ──────────────────────────────────
+    // ── Article meta ─────────────────────────────────────────────────────
 
+    /**
+     * Inject article meta tags.
+     * Only applies when resolved og:type is 'article'.
+     */
     private function inject_article(): void {
-        // Placeholder for future tasks:
-        // article:published_time, article:modified_time,
-        // article:author, article:section, article:tag
+        // Only for og:type = article
+        $og_type = $this->tm->getContent( 'meta::property::og:type' );
+        if ( 'article' !== $og_type ) {
+            // Check if we just set it in the collection
+            $tag = $this->col->get( 'meta::property::og:type' );
+            if ( ! $tag instanceof PropertyMetaTag || 'article' !== $tag->getContent() ) {
+                return;
+            }
+        }
+
+        // article:tag — from WP post tags
+        if ( ! $this->col->has( 'meta::property::article:tag' ) ) {
+            $tags = get_the_tags( $this->post_id );
+            if ( $tags && ! is_wp_error( $tags ) ) {
+                $tag_objects = [];
+                foreach ( $tags as $tag ) {
+                    $tag_objects[] = ( new PropertyMetaTag() )
+                        ->setProperty( 'article:tag' )
+                        ->setContent( $tag->name );
+                }
+                if ( ! empty( $tag_objects ) ) {
+                    $this->col->set( 'meta::property::article:tag', $tag_objects );
+                }
+            }
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────
