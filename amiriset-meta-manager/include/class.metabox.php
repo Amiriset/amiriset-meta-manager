@@ -47,12 +47,10 @@ class MetaBox {
         'robots'         => 'meta::name::robots',
         'og_title'       => 'meta::property::og:title',
         'og_description' => 'meta::property::og:description',
-        'og_image'       => 'meta::property::og:image',
         'og_type'        => 'meta::property::og:type',
         'tw_card'        => 'meta::property::twitter:card',
         'tw_title'       => 'meta::property::twitter:title',
         'tw_description' => 'meta::property::twitter:description',
-        'tw_image'       => 'meta::property::twitter:image',
         'tw_creator'     => 'meta::property::twitter:creator',
     ];
 
@@ -66,13 +64,20 @@ class MetaBox {
         'canonical'      => 'esc_url_raw',
         'og_title'       => 'sanitize_text_field',
         'og_description' => 'sanitize_textarea_field',
-        'og_image'       => 'esc_url_raw',
         'og_type'        => 'sanitize_text_field',
         'tw_card'        => 'sanitize_text_field',
         'tw_title'       => 'sanitize_text_field',
         'tw_description' => 'sanitize_textarea_field',
-        'tw_image'       => 'esc_url_raw',
         'tw_creator'     => 'sanitize_text_field',
+    ];
+
+    /**
+     * Image fields stored as attachment IDs.
+     * Handled separately from the SANITIZERS loop.
+     */
+    private const IMAGE_FIELDS = [
+        'og_image' => 'meta::property::og:image',
+        'tw_image' => 'meta::property::twitter:image',
     ];
 
     /**
@@ -106,6 +111,23 @@ class MetaBox {
             }
         }
         return '';
+    }
+
+    /**
+     * Resolve a stored image value to a URL.
+     * Handles both attachment IDs (new) and raw URLs (legacy).
+     *
+     * @param string $value Attachment ID or URL.
+     * @return string URL or empty string.
+     */
+    public static function resolve_image_value( string $value ): string {
+        if ( '' === $value ) {
+            return '';
+        }
+        if ( ctype_digit( $value ) ) {
+            return wp_get_attachment_image_url( (int) $value, 'full' ) ?: '';
+        }
+        return $value;
     }
 
     /**
@@ -246,6 +268,13 @@ class MetaBox {
         }
         $f['canonical'] = self::get_canonical( $tm );
 
+        // Image fields: raw value (ID or legacy URL) + resolved URL for preview
+        foreach ( self::IMAGE_FIELDS as $form_field => $tc_key ) {
+            $raw_value = $tm->getContent( $tc_key );
+            $f[ $form_field ] = $raw_value;
+            $f[ $form_field . '_url' ] = self::resolve_image_value( $raw_value );
+        }
+
         // Custom meta rows
         $custom = self::extract_custom_meta( $tm );
 
@@ -319,12 +348,12 @@ class MetaBox {
                         <th><label><?php Utils::ESC_HTML_E('OG Image'); ?></label></th>
                         <td>
                             <div class="amm-og-image-wrap">
-                                <?php if ( $f['og_image'] ) : ?>
-                                    <img src="<?php echo esc_url( $f['og_image'] ); ?>" class="amm-og-preview" alt="">
+                                <?php if ( $f['og_image_url'] ) : ?>
+                                    <img src="<?php echo esc_url( $f['og_image_url'] ); ?>" class="amm-og-preview" alt="">
                                 <?php endif; ?>
                                 <input type="hidden" id="amm_og_image" name="amm[og_image]"
                                        value="<?php echo esc_attr( $f['og_image'] ); ?>">
-                                <button type="button" class="button amm-media-btn" data-target="amm_og_image">
+                                <button type="button" class="button amm-media-btn" data-target="amm_og_image" data-store="id">
                                     <?php Utils::ESC_HTML_E('Select image'); ?>
                                 </button>
                                 <?php if ( $f['og_image'] ) : ?>
@@ -463,13 +492,13 @@ class MetaBox {
                         <th><label><?php Utils::ESC_HTML_E('Twitter Image'); ?></label></th>
                         <td>
                             <div class="amm-og-image-wrap">
-                                <?php if ( $f['tw_image'] ) : ?>
-                                    <img src="<?php echo esc_url( $f['tw_image'] ); ?>"
+                                <?php if ( $f['tw_image_url'] ) : ?>
+                                    <img src="<?php echo esc_url( $f['tw_image_url'] ); ?>"
                                          class="amm-og-preview" alt="">
                                 <?php endif; ?>
                                 <input type="hidden" id="amm_tw_image" name="amm[tw_image]"
                                        value="<?php echo esc_attr( $f['tw_image'] ); ?>">
-                                <button type="button" class="button amm-media-btn" data-target="amm_tw_image">
+                                <button type="button" class="button amm-media-btn" data-target="amm_tw_image" data-store="id">
                                     <?php Utils::ESC_HTML_E('Select image'); ?>
                                 </button>
                                 <?php if ( $f['tw_image'] ) : ?>
@@ -592,6 +621,32 @@ class MetaBox {
             }
 
             $col->set( $tc_key, self::create_meta_tag( $tc_key, $value ) );
+        }
+
+        // Image fields → store attachment ID (or legacy URL for backward compat)
+        foreach ( self::IMAGE_FIELDS as $form_field => $tc_key ) {
+            $value = $raw[ $form_field ] ?? '';
+            if ( '' === $value ) {
+                continue;
+            }
+
+            $prop = explode( '::', $tc_key, 3 )[2];
+
+            if ( ctype_digit( $value ) ) {
+                // New format: attachment ID — validate it exists
+                $id = (int) $value;
+                if ( $id > 0 && wp_get_attachment_url( $id ) ) {
+                    $col->set( $tc_key,
+                        ( new PropertyMetaTag() )->setProperty( $prop )->setContent( $value ) );
+                }
+            } else {
+                // Legacy format: raw URL — preserve until user re-selects
+                $url = esc_url_raw( $value );
+                if ( $url ) {
+                    $col->set( $tc_key,
+                        ( new PropertyMetaTag() )->setProperty( $prop )->setContent( $url ) );
+                }
+            }
         }
 
         // Canonical → LinkTag
