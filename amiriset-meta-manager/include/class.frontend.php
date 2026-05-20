@@ -90,7 +90,9 @@ class Frontend {
         // Render
         echo "\n<!-- Amiriset Meta Manager -->\n";
         $tm->toHtml();
-        echo "<!-- /Amiriset Meta Manager -->\n\n";
+        echo "<!-- /Amiriset Meta Manager -->\n";
+        DebugLog::render();
+        echo "\n";
     }
     
     /**

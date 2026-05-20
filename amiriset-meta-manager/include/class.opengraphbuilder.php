@@ -86,6 +86,8 @@ class OpenGraphBuilder {
         $this->inject_open_graph();
         $this->inject_twitter();
         $this->inject_article();
+
+        DebugLog::log( 'OpenGraphBuilder', 'applied for post #' . $post_id . ' (' . get_post_type( $post_id ) . ')' );
     }
 
     // ── WordPress data ───────────────────────────────────────────────────
@@ -103,7 +105,7 @@ class OpenGraphBuilder {
     }
 
     /**
-     * Resolve primary category name. 
+     * Resolve primary category name.
      *
      * Priority:
      *   1. Yoast primary category (_yoast_wpseo_primary_category)
@@ -180,6 +182,7 @@ class OpenGraphBuilder {
         // og:title (always set — with suffix)
         $this->og_title = ( $this->raw_og_title ?: $this->wp_title ) . $suffix;
         $this->set_property( 'og:title', $this->og_title );
+        DebugLog::log( 'OpenGraphBuilder', 'og:title source: ' . ( $this->raw_og_title ? 'custom' : 'wp_title' ) );
 
         // og:type (manual override wins → attachment mime → type map → _default)
         if ( ! $this->col->has( 'meta::property::og:type' ) ) {
@@ -272,9 +275,11 @@ class OpenGraphBuilder {
             // Check if we just set it in the collection
             $tag = $this->col->get( 'meta::property::og:type' );
             if ( ! $tag instanceof PropertyMetaTag || 'article' !== $tag->getContent() ) {
+                DebugLog::log( 'OpenGraphBuilder', 'article meta skipped (og:type != article)' );
                 return;
             }
         }
+        DebugLog::log( 'OpenGraphBuilder', 'article meta injected' );
 
         // article:published_time — ISO8601
         if ( ! $this->col->has( 'meta::property::article:published_time' ) && $this->wp_published_time ) {
@@ -330,7 +335,9 @@ class OpenGraphBuilder {
 
         // Attachments: resolve from MIME type
         if ( 'attachment' === $post_type ) {
-            return $this->resolve_attachment_og_type();
+            $type = $this->resolve_attachment_og_type();
+            DebugLog::log( 'OpenGraphBuilder', 'og:type -> ' . $type . ' (attachment MIME)' );
+            return $type;
         }
 
         // Type map from settings
@@ -338,7 +345,10 @@ class OpenGraphBuilder {
             'post' => 'article', 'page' => 'website', '_default' => 'article',
         ] );
 
-        return $type_map[ $post_type ] ?? $type_map['_default'] ?? 'article';
+        $type   = $type_map[ $post_type ] ?? $type_map['_default'] ?? 'article';
+        $source = isset( $type_map[ $post_type ] ) ? 'type_map[' . $post_type . ']' : 'type_map[_default]';
+        DebugLog::log( 'OpenGraphBuilder', 'og:type -> ' . $type . ' (' . $source . ')' );
+        return $type;
     }
 
     /**

@@ -90,7 +90,11 @@ class MetaBox {
         $tm  = new TagManager();
         $raw = get_post_meta( $post_id, AMIRISET_META_MANAGER_DB_KEY, true );
         if ( $raw ) {
+            $raw = MetadataMigrator::migrate( $raw );
             $tm->deserealise( $raw );
+            DebugLog::log( 'MetaBox', 'loaded post #' . $post_id . ' (schema: ' . $tm->getData( '_schema', 'legacy' ) . ')' );
+        } else {
+            DebugLog::log( 'MetaBox', 'no meta for post #' . $post_id );
         }
         return $tm;
     }

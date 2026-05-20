@@ -52,6 +52,7 @@ class ImageResolver {
         if ( $custom ) {
             $url = MetaBox::resolve_image_value( $custom );
             if ( $url ) {
+                DebugLog::log( 'ImageResolver', 'og:image -> custom (post meta)' );
                 return $url;
             }
         }
@@ -61,6 +62,7 @@ class ImageResolver {
         if ( $thumb_id ) {
             $src = wp_get_attachment_image_url( $thumb_id, 'full' );
             if ( $src ) {
+                DebugLog::log( 'ImageResolver', 'og:image -> featured image (ID:' . $thumb_id . ')' );
                 return $src;
             }
         }
@@ -69,10 +71,12 @@ class ImageResolver {
         $opts    = Utils::GET_OPTIONS();
         $default = $opts->get( 'og_default_image' );
         if ( $default ) {
+            DebugLog::log( 'ImageResolver', 'og:image -> global default' );
             return $default;
         }
 
         // 4. Nothing
+        DebugLog::log( 'ImageResolver', 'og:image -> none' );
         return null;
     }
 
@@ -90,10 +94,12 @@ class ImageResolver {
         if ( $custom ) {
             $url = MetaBox::resolve_image_value( $custom );
             if ( $url ) {
+                DebugLog::log( 'ImageResolver', 'twitter:image -> custom (post meta)' );
                 return $url;
             }
         }
 
+        DebugLog::log( 'ImageResolver', 'twitter:image -> OG fallback chain' );
         // Fall back to OG image chain
         return self::RESOLVE_OG_IMAGE( $post_id, $tm );
     }
