@@ -25,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Class <b>Core</b> -- Orchestrates all plugin components.
  *
- * @version 1.0.0-a.4
+ * @version 1.0.0-a.5
  * @package Amiriset\MetaManager
  * @license GPL-3.0-or-later
  * @author Y.Frolov 
@@ -56,6 +56,7 @@ final class Core {
         $this->frontend->init_hooks();
         $this->ajax->init_hooks();
         $this->admin->init_hooks();
+        MetadataMigrator::init_hooks();
     }
     
     private function load_text_domain(): void {

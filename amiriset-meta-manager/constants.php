@@ -63,3 +63,8 @@ define( 'AMIRISET_META_MANAGER_DISPLAY_NAME', '🔍 Amiriset Meta Manager' );
  * Bumped when the data structure changes — enables future migrations.
  */
 define( 'AMIRISET_META_MANAGER_SCHEMA_VERSION', '1.0.0-a.5' );
+
+/**
+ * Option key for tracking installed schema version.
+ */
+define( 'AMIRISET_META_MANAGER_SCHEMA_OPTION_KEY', '_amm_schema_version' );
