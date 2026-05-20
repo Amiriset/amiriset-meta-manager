@@ -143,7 +143,16 @@ class Admin {
                 $opts->set( 'og_site_name',      sanitize_text_field( Utils::POST('og_site_name') ) );
                 $opts->set( 'og_default_image',  esc_url_raw( Utils::POST('og_default_image') ) );
                 $opts->set( 'og_default_locale', sanitize_text_field( Utils::POST('og_default_locale') ) );
-                $opts->set( 'og_default_type',   sanitize_text_field( Utils::POST('og_default_type') ) );
+
+                // og:type map — sanitize each entry
+                $raw_map = Utils::POST_ARRAY( 'og_type_map' );
+                $type_map = [];
+                foreach ( $raw_map as $pt => $type ) {
+                    $type_map[ sanitize_key( $pt ) ] = sanitize_text_field( $type );
+                }
+                if ( ! empty( $type_map ) ) {
+                    $opts->set( 'og_type_map', $type_map );
+                }
                 break;
 
             case 'twitter':
@@ -464,6 +473,21 @@ class Admin {
      * Open Graph tab.
      */
     private function render_tab_og( Options $opts ): void {
+        $og_types = [
+            'website'       => 'website',
+            'article'       => 'article',
+            'profile'       => 'profile',
+            'book'          => 'book',
+            'video.movie'   => 'video.movie',
+            'video.episode' => 'video.episode',
+            'video.other'   => 'video.other',
+            'music.song'    => 'music.song',
+            'music.album'   => 'music.album',
+        ];
+
+        $type_map   = $opts->getArray( 'og_type_map', [ 'post' => 'article', 'page' => 'website', '_default' => 'article' ] );
+        $all_cpts   = $this->get_all_public_cpts();
+        $post_types = array_merge( [ 'post' => 'Posts', 'page' => 'Pages' ], $all_cpts );
         ?>
         <table class="form-table amm-settings-table">
             <tr>
@@ -473,19 +497,6 @@ class Admin {
                            value="<?php echo esc_attr( $opts->get('og_site_name') ); ?>"
                            class="regular-text"
                            placeholder="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
-                </td>
-            </tr>
-            <tr>
-                <th><?php Utils::ESC_HTML_E('Default OG Type'); ?></th>
-                <td>
-                    <select name="og_default_type">
-                        <?php foreach ( [ 'website', 'article', 'product' ] as $t ) : ?>
-                            <option value="<?php echo esc_attr( $t ); ?>"
-                                <?php selected( $opts->get('og_default_type'), $t ); ?>>
-                                <?php echo esc_html( $t ); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
                 </td>
             </tr>
             <tr>
@@ -515,6 +526,42 @@ class Admin {
                             </button>
                         <?php endif; ?>
                     </div>
+                </td>
+            </tr>
+        </table>
+
+        <h2 class="amm-section-title"><?php Utils::ESC_HTML_E('og:type per Post Type'); ?></h2>
+        <p class="description"><?php Utils::ESC_HTML_E('Automatic og:type based on post type. Can be overridden per-post in the meta box.'); ?></p>
+        <table class="form-table amm-settings-table">
+            <?php foreach ( $post_types as $slug => $label ) :
+                $current = $type_map[ $slug ] ?? ( $type_map['_default'] ?? 'article' );
+                ?>
+                <tr>
+                    <th><?php echo esc_html( $label . ' (' . $slug . ')' ); ?></th>
+                    <td>
+                        <select name="og_type_map[<?php echo esc_attr( $slug ); ?>]">
+                            <?php foreach ( $og_types as $val => $lbl ) : ?>
+                                <option value="<?php echo esc_attr( $val ); ?>"
+                                    <?php selected( $current, $val ); ?>>
+                                    <?php echo esc_html( $lbl ); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            <tr>
+                <th><?php Utils::ESC_HTML_E('Other / unlisted CPT'); ?></th>
+                <td>
+                    <select name="og_type_map[_default]">
+                        <?php foreach ( $og_types as $val => $lbl ) : ?>
+                            <option value="<?php echo esc_attr( $val ); ?>"
+                                <?php selected( $type_map['_default'] ?? 'article', $val ); ?>>
+                                <?php echo esc_html( $lbl ); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <p class="description"><?php Utils::ESC_HTML_E('Fallback for post types not listed above.'); ?></p>
                 </td>
             </tr>
         </table>

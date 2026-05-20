@@ -59,7 +59,7 @@ class Activator {
         $opts    = get_option( AMIRISET_META_MANAGER_OPTION_KEY, [] );
         $changed = false;
 
-        // Old key => new key
+        // Old key => new key (simple renames)
         $map = [
             'default_og_type'      => 'og_default_type',
             'default_og_image'     => 'og_default_image',
@@ -75,6 +75,16 @@ class Activator {
                 unset( $opts[ $old ] );
                 $changed = true;
             }
+        }
+
+        // Migrate og_default_type → og_type_map
+        if ( isset( $opts['og_default_type'] ) && ! isset( $opts['og_type_map'] ) ) {
+            $defaults   = self::defaults();
+            $type_map   = $defaults['og_type_map'];
+            $type_map['_default'] = $opts['og_default_type'];
+            $opts['og_type_map']  = $type_map;
+            unset( $opts['og_default_type'] );
+            $changed = true;
         }
 
         // Merge with defaults to fill any missing new keys
@@ -111,7 +121,11 @@ class Activator {
             'og_site_name'      => '',
             'og_default_image'  => '',
             'og_default_locale' => '',
-            'og_default_type'   => 'website',
+            'og_type_map'       => [
+                'post'       => 'article',
+                'page'       => 'website',
+                '_default'   => 'article',   // fallback for CPTs not explicitly mapped
+            ],
 
             // ── Twitter global ───────────────────────
             'twitter_site'      => '',
