@@ -47,10 +47,13 @@ class ImageResolver {
      * @return string|null Image URL or null if nothing found.
      */
     public static function RESOLVE_OG_IMAGE( int $post_id, TagManager $tm ): ?string {
-        // 1. Custom OG image from post meta
+        // 1. Custom OG image from post meta (ID or legacy URL)
         $custom = $tm->getContent( 'meta::property::og:image' );
         if ( $custom ) {
-            return $custom;
+            $url = MetaBox::resolve_image_value( $custom );
+            if ( $url ) {
+                return $url;
+            }
         }
 
         // 2. Featured image
@@ -82,10 +85,13 @@ class ImageResolver {
      * @return string|null Image URL or null.
      */
     public static function RESOLVE_TWITTER_IMAGE( int $post_id, TagManager $tm ): ?string {
-        // Custom Twitter image takes priority
+        // Custom Twitter image takes priority (ID or legacy URL)
         $custom = $tm->getContent( 'meta::property::twitter:image' );
         if ( $custom ) {
-            return $custom;
+            $url = MetaBox::resolve_image_value( $custom );
+            if ( $url ) {
+                return $url;
+            }
         }
 
         // Fall back to OG image chain

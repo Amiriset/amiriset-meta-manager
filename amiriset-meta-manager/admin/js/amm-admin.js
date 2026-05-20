@@ -141,8 +141,10 @@
 
             const { $input, $btn: $activeBtn } = $mediaTarget;
 
-            // 1. Save full-size URL to the hidden field
-            $input.val(attachment.url).trigger('change');
+            // 1. Save value: attachment ID if data-store="id", else full URL
+            var storeMode = $mediaTarget.$btn.data('store') || 'url';
+            var saveValue = (storeMode === 'id') ? attachment.id : attachment.url;
+            $input.val(saveValue).trigger('change');
 
             // 2. Show / update preview image
             const $wrap = $input.closest('.amm-og-image-wrap');
@@ -240,13 +242,13 @@
     // ── Copy OG → Twitter ─────────────────────────────────────────────────────
 
     $('#amm-copy-from-og').on('click', function () {
-        var map = {
+        // Text fields: copy value directly
+        var textMap = {
             '#amm_og_title':       '#amm_tw_title',
-            '#amm_og_description': '#amm_tw_description',
-            '#amm_og_image':       '#amm_tw_image'
+            '#amm_og_description': '#amm_tw_description'
         };
 
-        $.each(map, function (ogSel, twSel) {
+        $.each(textMap, function (ogSel, twSel) {
             var $tw = $(twSel);
             if (!$tw.val()) {
                 var ogVal = $(ogSel).val();
@@ -256,19 +258,30 @@
             }
         });
 
-        // Handle image preview for tw_image
-        var twImg = $('#amm_tw_image').val();
-        if (twImg) {
-            var $wrap = $('#amm_tw_image').closest('.amm-og-image-wrap');
-            if (!$wrap.find('.amm-og-preview').length) {
-                $('<img>', { src: twImg, alt: '', class: 'amm-og-preview' }).prependTo($wrap);
-                var i18n = (ammData && ammData.i18n) ? ammData.i18n : {};
-                if (!$wrap.find('.amm-media-remove').length) {
-                    $('<button>', {
-                        type: 'button',
-                        class: 'button amm-media-remove',
-                        text: i18n.removeImage || 'Remove'
-                    }).insertAfter($wrap.find('.amm-media-btn'));
+        // Image: copy attachment ID + use OG preview src for Twitter preview
+        var $twImg = $('#amm_tw_image');
+        if (!$twImg.val()) {
+            var ogId = $('#amm_og_image').val();
+            if (ogId) {
+                $twImg.val(ogId).trigger('change');
+
+                // Get the actual preview URL from OG preview image (not the ID)
+                var ogPreviewSrc = $('#amm_og_image').closest('.amm-og-image-wrap')
+                    .find('.amm-og-preview').attr('src');
+
+                if (ogPreviewSrc) {
+                    var $wrap = $twImg.closest('.amm-og-image-wrap');
+                    if (!$wrap.find('.amm-og-preview').length) {
+                        $('<img>', { src: ogPreviewSrc, alt: '', class: 'amm-og-preview' }).prependTo($wrap);
+                        var i18n = (ammData && ammData.i18n) ? ammData.i18n : {};
+                        if (!$wrap.find('.amm-media-remove').length) {
+                            $('<button>', {
+                                type: 'button',
+                                class: 'button amm-media-remove',
+                                text: i18n.removeImage || 'Remove'
+                            }).insertAfter($wrap.find('.amm-media-btn'));
+                        }
+                    }
                 }
             }
         }

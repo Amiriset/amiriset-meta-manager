@@ -802,7 +802,7 @@ class Admin {
                 $m_desc  = $tm->getContent( 'meta::name::description' );
                 $m_kw    = $tm->getContent( 'meta::name::keywords' );
                 $m_og_t  = $tm->getContent( 'meta::property::og:title' );
-                $m_img   = $tm->getContent( 'meta::property::og:image' );
+                $m_img   = MetaBox::resolve_image_value( $tm->getContent( 'meta::property::og:image' ) );
                 $custom  = MetaBox::extract_custom_meta( $tm );
 
                 $has_meta   = $m_desc || $m_kw || $m_og_t;
