@@ -50,6 +50,7 @@ class OpenGraphBuilder {
     private string $wp_permalink;
     private string $wp_published_time;
     private string $wp_modified_time;
+    private string $wp_author;
 
     // Raw per-post values — read before any modification
     private string $raw_og_title;
@@ -93,6 +94,9 @@ class OpenGraphBuilder {
         $this->wp_permalink      = get_permalink( $this->post_id );
         $this->wp_published_time = get_post_time( 'c', false, $this->post_id ) ?: '';
         $this->wp_modified_time  = get_post_modified_time( 'c', false, $this->post_id ) ?: '';
+
+        $post = get_post( $this->post_id );
+        $this->wp_author = $post ? get_the_author_meta( 'display_name', $post->post_author ) : '';
     }
 
     /**
@@ -239,6 +243,11 @@ class OpenGraphBuilder {
         // article:modified_time — ISO8601
         if ( ! $this->col->has( 'meta::property::article:modified_time' ) && $this->wp_modified_time ) {
             $this->set_property( 'article:modified_time', $this->wp_modified_time );
+        }
+
+        // article:author
+        if ( ! $this->col->has( 'meta::property::article:author' ) && $this->wp_author ) {
+            $this->set_property( 'article:author', $this->wp_author );
         }
 
         // article:tag — from WP post tags
