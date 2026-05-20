@@ -48,6 +48,8 @@ class OpenGraphBuilder {
     // WordPress data — resolved once
     private string $wp_title;
     private string $wp_permalink;
+    private string $wp_published_time;
+    private string $wp_modified_time;
 
     // Raw per-post values — read before any modification
     private string $raw_og_title;
@@ -87,8 +89,10 @@ class OpenGraphBuilder {
     // ── WordPress data ───────────────────────────────────────────────────
 
     private function resolve_wp_data(): void {
-        $this->wp_title     = get_the_title( $this->post_id );
-        $this->wp_permalink = get_permalink( $this->post_id );
+        $this->wp_title          = get_the_title( $this->post_id );
+        $this->wp_permalink      = get_permalink( $this->post_id );
+        $this->wp_published_time = get_post_time( 'c', false, $this->post_id ) ?: '';
+        $this->wp_modified_time  = get_post_modified_time( 'c', false, $this->post_id ) ?: '';
     }
 
     /**
@@ -228,19 +232,13 @@ class OpenGraphBuilder {
         }
 
         // article:published_time — ISO8601
-        if ( ! $this->col->has( 'meta::property::article:published_time' ) ) {
-            $published = get_post_time( 'c', false, $this->post_id );
-            if ( $published ) {
-                $this->set_property( 'article:published_time', $published );
-            }
+        if ( ! $this->col->has( 'meta::property::article:published_time' ) && $this->wp_published_time ) {
+            $this->set_property( 'article:published_time', $this->wp_published_time );
         }
 
         // article:modified_time — ISO8601
-        if ( ! $this->col->has( 'meta::property::article:modified_time' ) ) {
-            $modified = get_post_modified_time( 'c', false, $this->post_id );
-            if ( $modified ) {
-                $this->set_property( 'article:modified_time', $modified );
-            }
+        if ( ! $this->col->has( 'meta::property::article:modified_time' ) && $this->wp_modified_time ) {
+            $this->set_property( 'article:modified_time', $this->wp_modified_time );
         }
 
         // article:tag — from WP post tags
