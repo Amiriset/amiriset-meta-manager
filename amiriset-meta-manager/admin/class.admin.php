@@ -141,7 +141,7 @@ class Admin {
 
             case 'og':
                 $opts->set( 'og_site_name',      sanitize_text_field( Utils::POST('og_site_name') ) );
-                $opts->set( 'og_default_image',  esc_url_raw( Utils::POST('og_default_image') ) );
+                $opts->set( 'og_default_image',  $this->sanitize_image_field( Utils::POST('og_default_image') ) );
                 $opts->set( 'og_default_locale', sanitize_text_field( Utils::POST('og_default_locale') ) );
 
                 // og:type map — sanitize each entry
@@ -164,7 +164,7 @@ class Admin {
                 $opts->set( 'jsonld_entity_type',  sanitize_text_field( Utils::POST('jsonld_entity_type') ) );
                 $opts->set( 'jsonld_entity_name',  sanitize_text_field( Utils::POST('jsonld_entity_name') ) );
                 $opts->set( 'jsonld_entity_url',   esc_url_raw( Utils::POST('jsonld_entity_url') ) );
-                $opts->set( 'jsonld_entity_logo',  esc_url_raw( Utils::POST('jsonld_entity_logo') ) );
+                $opts->set( 'jsonld_entity_logo',  $this->sanitize_image_field( Utils::POST('jsonld_entity_logo') ) );
                 $opts->set( 'jsonld_website_name', sanitize_text_field( Utils::POST('jsonld_website_name') ) );
                 $opts->set( 'jsonld_website_alt',  sanitize_text_field( Utils::POST('jsonld_website_alt') ) );
                 break;
@@ -356,6 +356,22 @@ class Admin {
     }
 
     /**
+     * Sanitize an image field value — accepts attachment ID or legacy URL.
+     *
+     * @param string $value Raw POST value.
+     * @return string Validated attachment ID or sanitized URL.
+     */
+    private function sanitize_image_field( string $value ): string {
+        if ( '' === $value ) {
+            return '';
+        }
+        if ( ctype_digit( $value ) && (int) $value > 0 && wp_get_attachment_url( (int) $value ) ) {
+            return $value;
+        }
+        return esc_url_raw( $value );
+    }
+
+    /**
      * SEO tab — robots, distribution, classification, copyright, post types, keywords.
      */
     private function render_tab_seo( Options $opts ): void {
@@ -512,15 +528,19 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('Default OG Image'); ?></th>
                 <td>
                     <div class="amm-og-image-wrap">
-                        <?php if ( $opts->get('og_default_image') ) : ?>
-                            <img src="<?php echo esc_url( $opts->get('og_default_image') ); ?>" class="amm-og-preview" alt="">
+                        <?php
+                        $og_img_raw = $opts->get('og_default_image');
+                        $og_img_url = MetaBox::resolve_image_value( $og_img_raw );
+                        ?>
+                        <?php if ( $og_img_url ) : ?>
+                            <img src="<?php echo esc_url( $og_img_url ); ?>" class="amm-og-preview" alt="">
                         <?php endif; ?>
                         <input type="hidden" id="amm_og_default_image" name="og_default_image"
-                               value="<?php echo esc_attr( $opts->get('og_default_image') ); ?>">
-                        <button type="button" class="button amm-media-btn" data-target="amm_og_default_image">
+                               value="<?php echo esc_attr( $og_img_raw ); ?>">
+                        <button type="button" class="button amm-media-btn" data-target="amm_og_default_image" data-store="id">
                             <?php Utils::ESC_HTML_E('Select image'); ?>
                         </button>
-                        <?php if ( $opts->get('og_default_image') ) : ?>
+                        <?php if ( $og_img_raw ) : ?>
                             <button type="button" class="button amm-media-remove">
                                 <?php Utils::ESC_HTML_E('Remove'); ?>
                             </button>
@@ -653,15 +673,19 @@ class Admin {
                 <th><?php Utils::ESC_HTML_E('Logo'); ?></th>
                 <td>
                     <div class="amm-og-image-wrap">
-                        <?php if ( $opts->get('jsonld_entity_logo') ) : ?>
-                            <img src="<?php echo esc_url( $opts->get('jsonld_entity_logo') ); ?>" class="amm-og-preview" alt="">
+                        <?php
+                        $logo_raw = $opts->get('jsonld_entity_logo');
+                        $logo_url = MetaBox::resolve_image_value( $logo_raw );
+                        ?>
+                        <?php if ( $logo_url ) : ?>
+                            <img src="<?php echo esc_url( $logo_url ); ?>" class="amm-og-preview" alt="">
                         <?php endif; ?>
                         <input type="hidden" id="amm_jsonld_entity_logo" name="jsonld_entity_logo"
-                               value="<?php echo esc_attr( $opts->get('jsonld_entity_logo') ); ?>">
-                        <button type="button" class="button amm-media-btn" data-target="amm_jsonld_entity_logo">
+                               value="<?php echo esc_attr( $logo_raw ); ?>">
+                        <button type="button" class="button amm-media-btn" data-target="amm_jsonld_entity_logo" data-store="id">
                             <?php Utils::ESC_HTML_E('Select image'); ?>
                         </button>
-                        <?php if ( $opts->get('jsonld_entity_logo') ) : ?>
+                        <?php if ( $logo_raw ) : ?>
                             <button type="button" class="button amm-media-remove">
                                 <?php Utils::ESC_HTML_E('Remove'); ?>
                             </button>
