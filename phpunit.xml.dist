@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+  bootstrap="tests/bootstrap.php"
+  backupGlobals="false"
+  beStrictAboutTestsThatDoNotTestAnything="true"
+  beStrictAboutOutputDuringTests="true"
+  colors="true"
+  convertDeprecatedExpectationsToFailures="true"
+  failOnWarning="false"
+  failOnRisky="false"
+  stopOnFailure="false"
+  verbose="true"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.5/phpunit.xsd"
+>
+  <testsuites>
+    <testsuite name="amiriset-meta-manager">
+      <directory suffix="Test.php">tests/</directory>
+    </testsuite>
+  </testsuites>
+
+  <coverage processUncoveredFiles="true">
+    <include>
+      <directory suffix=".php">src/</directory>
+      <directory suffix=".php">includes/</directory>
+    </include>
+    <exclude>
+      <directory suffix=".php">vendor/</directory>
+      <directory suffix=".php">tests/</directory>
+    </exclude>
+  </coverage>
+
+  <php>
+    <const name="WP_TESTS_DOMAIN" value="amiriset-meta-manager"/>
+    <ini name="error_reporting" value="-1"/>
+    <ini name="display_errors" value="on"/>
+  </php>
+</phpunit>
