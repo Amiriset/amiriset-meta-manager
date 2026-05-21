@@ -1,0 +1,23 @@
+{
+  "name": "amiriset/amiriset-meta-manager",
+  "description": "WordPress Plugin - Per-page/post SEO meta tags stored as JSON. Supports pages, posts and all CPTs.",
+  "type": "wordpress-plugin",
+  "license": "AGPL-3.0-or-later",
+  "homepage": "http://amiriset.com",
+  "require": {
+    "php": ">=7.4"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9 || ^10",
+    "wp-cli/wp-cli": "^2.6",
+    "wp-coding-standards/wpcs": "^3.0",
+    "phpcompatibility/php-compatibility": "^9.0",
+    "dealerdirect/phpcodesniffer-composer-installer": "^0.7"
+  },
+  "scripts": {
+    "test": "phpunit",
+    "test-coverage": "phpunit --coverage-html coverage --coverage-text",
+    "lint": "phpcs --standard=WordPress",
+    "lint-fix": "phpcbf --standard=WordPress"
+  }
+}
