@@ -16,7 +16,8 @@
  *                                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-namespace Amiriset;
+namespace Amiriset\MetaManager;
+defined( 'ABSPATH' ) || exit;
 
 //------------------------------------------------------------------------------
 //    DESCRIPTIONS
