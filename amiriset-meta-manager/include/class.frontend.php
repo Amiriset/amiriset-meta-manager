@@ -41,11 +41,162 @@ class Frontend {
     }
 
     public function init_hooks(): void {
+        add_action( 'wp_head',            [ $this, 'output_global_meta'    ], 0 );
         add_action( 'wp_head',            [ $this, 'output_meta_tags'      ], 1 );
         add_action( 'wp_head',            [ $this, 'output_analytics_head' ], 99 );
         add_action( 'wp_body_open',       [ $this, 'output_analytics_body' ], 1 );
         add_filter( 'wp_robots',          [ $this, 'filter_wp_robots' ], 99 );
         add_action( 'wp_head',            [ $this, 'suppress_core_tags' ], 0 );
+
+        $this->init_technical_overrides();
+    }
+
+    /**
+     * Set up technical meta overrides.
+     *
+     * Strategy (two tiers):
+     *   1. remove_action — zero cost, covers themes that use wp_head hooks.
+     *   2. Output buffer  — fallback for themes that hardcode tags in header.php.
+     *
+     * Our tags are output via output_global_meta() at priority 0.
+     */
+    private function init_technical_overrides(): void {
+        $opts = $this->options;
+
+        // ── charset ──────────────────────────────────────────────────────
+        // NOT using option_blog_charset filter — it affects mb_internal_encoding()
+        // and invalid values crash the entire site. Handled via output buffer.
+        if ( $opts->get( 'charset' ) ) {
+            remove_action( 'wp_head', 'wp_charset', 1 );
+        }
+
+        // ── viewport ─────────────────────────────────────────────────────
+        if ( $opts->get( 'viewport' ) ) {
+            remove_action( 'wp_head', 'wp_viewport_meta_tag', 1 );
+        }
+
+        // ── Tier 2: output buffer for hardcoded duplicates ───────────────
+        if ( $this->has_technical_overrides() ) {
+            add_action( 'template_redirect', [ $this, 'start_head_buffer' ] );
+        }
+    }
+
+    /**
+     * Check if any technical overrides require head deduplication.
+     */
+    private function has_technical_overrides(): bool {
+        return $this->options->get( 'charset' ) !== ''
+            || $this->options->get( 'viewport' ) !== ''
+            || $this->options->get( 'theme_color' ) !== '';
+    }
+
+    /**
+     * Start output buffering to deduplicate technical tags.
+     * Only active on frontend when overrides exist.
+     */
+    public function start_head_buffer(): void {
+        if ( is_admin() ) {
+            return;
+        }
+        ob_start( [ $this, 'process_head_buffer' ] );
+    }
+
+    /**
+     * Process buffered output: remove duplicate viewport/theme-color from theme.
+     * Keeps our tags (first occurrence), removes theme duplicates.
+     *
+     * @param string $html Full page HTML.
+     * @return string Processed HTML.
+     */
+    public function process_head_buffer( string $html ): string {
+        $head_end = strpos( $html, '</head>' );
+        if ( false === $head_end ) {
+            return $html;
+        }
+
+        $head = substr( $html, 0, $head_end );
+        $rest = substr( $html, $head_end );
+
+        $opts = $this->options;
+
+        $charset = $opts->get( 'charset' );
+        if ( $charset ) {
+            $head = $this->dedup_charset( $head, $charset );
+        }
+
+        $viewport = $opts->get( 'viewport' );
+        if ( $viewport ) {
+            $head = $this->dedup_meta_name( $head, 'viewport', $viewport );
+        }
+
+        $theme_color = $opts->get( 'theme_color' );
+        if ( $theme_color ) {
+            $head = $this->dedup_meta_name( $head, 'theme-color', $theme_color );
+        }
+
+        return $head . $rest;
+    }
+
+    /**
+     * Replace all <meta charset="..."> with our override.
+     * Handles both HTML5 (<meta charset="...">) and legacy (<meta http-equiv="Content-Type">) formats.
+     *
+     * @param string $head    Head HTML.
+     * @param string $charset Our charset value.
+     * @return string Processed HTML.
+     */
+    private function dedup_charset( string $head, string $charset ): string {
+        // Remove HTML5 charset tags
+        $head = preg_replace( '/<meta\s+charset=["\'][^"\']*["\']\s*\/?>\s*/i', '', $head );
+        // Remove legacy http-equiv Content-Type
+        $head = preg_replace( '/<meta\s+http-equiv=["\']Content-Type["\']\s+content=["\'][^"\']*["\']\s*\/?>\s*/i', '', $head );
+
+        // Inject our charset right after <head>
+        $tag  = '<meta charset="' . esc_attr( $charset ) . '">';
+        $head = preg_replace( '/(<head[^>]*>)/i', '$1' . "\n" . $tag, $head, 1 );
+
+        return $head;
+    }
+
+    /**
+     * Replace all <meta name="X"> with a single one containing our override.
+     *
+     * @param string $head    Head HTML content.
+     * @param string $name    Meta name attribute value.
+     * @param string $content Our override content value.
+     * @return string Processed HTML.
+     */
+    private function dedup_meta_name( string $head, string $name, string $content ): string {
+        $pattern = '/<meta\s+name=["\']' . preg_quote( $name, '/' ) . '["\']\s+content=["\'][^"\']*["\']\s*\/?>\s*/i';
+        $head    = preg_replace( $pattern, '', $head );
+
+        // Re-inject our tag right after <head...>
+        $tag = '<meta name="' . esc_attr( $name ) . '" content="' . esc_attr( $content ) . '">';
+        $head = preg_replace( '/(<head[^>]*>)/i', '$1' . "\n" . $tag, $head, 1 );
+
+        return $head;
+    }
+
+    /**
+     * Output global technical meta tags on ALL pages.
+     * Charset, viewport, and theme-color are handled via output buffer dedup.
+     */
+    public function output_global_meta(): void {
+        $opts = $this->options;
+
+        // content-language (no common duplicate source)
+        $lang = $opts->get( 'content_language' );
+        if ( $lang ) {
+            printf( '<meta http-equiv="Content-Language" content="%s">' . "\n", esc_attr( $lang ) );
+        }
+
+        // viewport and theme-color are handled via output buffer dedup (see process_head_buffer)
+
+        // manifest (no common duplicate source)
+        $manifest = $opts->get( 'manifest' );
+        if ( $manifest ) {
+            printf( '<link rel="manifest" href="%s">' . "\n", esc_url( $manifest ) );
+        }
     }
 
     /**
