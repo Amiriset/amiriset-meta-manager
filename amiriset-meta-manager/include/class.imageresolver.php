@@ -67,9 +67,9 @@ class ImageResolver {
             }
         }
 
-        // 3. Global default OG image
+        // 3. Global default OG image (ID or URL)
         $opts    = Utils::GET_OPTIONS();
-        $default = $opts->get( 'og_default_image' );
+        $default = MetaBox::resolve_image_value( $opts->get( 'og_default_image' ) );
         if ( $default ) {
             DebugLog::log( 'ImageResolver', 'og:image -> global default' );
             return $default;
