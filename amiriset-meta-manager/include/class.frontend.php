@@ -184,15 +184,30 @@ class Frontend {
     public function output_global_meta(): void {
         $opts = $this->options;
 
-        // content-language (no common duplicate source)
+        // content-language
         $lang = $opts->get( 'content_language' );
         if ( $lang ) {
             printf( '<meta http-equiv="Content-Language" content="%s">' . "\n", esc_attr( $lang ) );
         }
 
+        // SEO common — site-wide meta tags
+        $seo_fields = [
+            'distribution'   => 'distribution',
+            'classification' => 'classification',
+            'copyright'      => 'copyright',
+            'developer'      => 'developer',
+        ];
+
+        foreach ( $seo_fields as $option_key => $meta_name ) {
+            $value = $opts->get( $option_key );
+            if ( $value ) {
+                printf( '<meta name="%s" content="%s">' . "\n", esc_attr( $meta_name ), esc_attr( $value ) );
+            }
+        }
+
         // viewport and theme-color are handled via output buffer dedup (see process_head_buffer)
 
-        // manifest (no common duplicate source)
+        // manifest
         $manifest = $opts->get( 'manifest' );
         if ( $manifest ) {
             printf( '<link rel="manifest" href="%s">' . "\n", esc_url( $manifest ) );
